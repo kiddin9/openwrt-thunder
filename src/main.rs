@@ -14,7 +14,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 pub trait Running {
-    fn launch(&self) -> anyhow::Result<()>;
+    fn run(&self) -> anyhow::Result<()>;
 }
 
 #[derive(Parser)]
@@ -43,6 +43,12 @@ pub enum Commands {
 
 #[derive(Args)]
 pub struct Config {
+    /// Xunlei panel username
+    #[clap(short, long)]
+    username: Option<String>,
+    /// Xunlei panel password
+    #[clap(short, long)]
+    password: Option<String>,
     /// Xunlei Listen host
     #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
     host: std::net::IpAddr,
@@ -63,15 +69,15 @@ fn main() -> anyhow::Result<()> {
     match opt.commands {
         #[cfg(feature = "systemd")]
         Commands::Install(config) => {
-            systemd::XunleiInstall::from(config).launch()?;
+            systemd::XunleiInstall::from(config).run()?;
         }
         #[cfg(feature = "systemd")]
         Commands::Uninstall => {
-            systemd::XunleiUninstall {}.launch()?;
+            systemd::XunleiUninstall {}.run()?;
         }
         #[cfg(feature = "launch")]
         Commands::Launch(config) => {
-            launch::XunleiLauncher::from(config).launch()?;
+            launch::XunleiLauncher::from(config).run()?;
         }
     }
     Ok(())

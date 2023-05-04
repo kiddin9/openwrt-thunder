@@ -1,4 +1,5 @@
 use anyhow::Context;
+use rsa::pkcs1::EncodeRsaPublicKey;
 use signal_hook::iterator::Signals;
 
 use crate::{standard, Config, Running};
@@ -12,6 +13,8 @@ use std::{
 };
 
 pub struct XunleiLauncher {
+    username: Option<String>,
+    password: Option<String>,
     host: std::net::IpAddr,
     port: u16,
     download_path: PathBuf,
@@ -21,6 +24,8 @@ pub struct XunleiLauncher {
 impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
         Self {
+            username: config.username,
+            password: config.password,
             host: config.host,
             port: config.port,
             download_path: config.download_path,
@@ -238,7 +243,7 @@ impl XunleiLauncher {
 }
 
 impl Running for XunleiLauncher {
-    fn launch(&self) -> anyhow::Result<()> {
+    fn run(&self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
 
         let mut signals = Signals::new([
@@ -271,11 +276,19 @@ impl Running for XunleiLauncher {
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let host = self.host.to_string();
+        let username = self.username.clone();
+        let password = self.password.clone();
+        let host = self.host.clone();
         let port = self.port;
         // run webui service
         std::thread::spawn(move || {
-            XunleiLauncher::run_ui(host, port, ui_envs);
+            // XunleiLauncher::run_ui(host, port, ui_envs);
+            match XunleiWebUIServer::new(username, password, host, port, ui_envs).run() {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("[XunleiWebUIServer] error: {}", e)
+                }
+            }
         });
 
         backend_thread
@@ -284,5 +297,70 @@ impl Running for XunleiLauncher {
 
         log::info!("[XunleiLauncher] All services have been complete");
         Ok(())
+    }
+}
+
+struct XunleiWebUIServer {
+    username: Option<String>,
+    password: Option<String>,
+    host: std::net::IpAddr,
+    port: u16,
+    enc: Encrypt,
+    envs: HashMap<String, String>,
+}
+
+impl XunleiWebUIServer {
+    fn new(
+        username: Option<String>,
+        password: Option<String>,
+        host: std::net::IpAddr,
+        port: u16,
+        envs: HashMap<String, String>,
+    ) -> Self {
+        Self {
+            host,
+            port,
+            envs,
+            username,
+            password,
+            enc: Encrypt::new(),
+        }
+    }
+}
+
+impl Running for XunleiWebUIServer {
+    fn run(&self) -> anyhow::Result<()> {
+        todo!()
+    }
+}
+
+struct Encrypt {
+    pub_key: rsa::RsaPublicKey,
+    pri_key: rsa::RsaPrivateKey,
+}
+
+impl Encrypt {
+    fn new() -> Self {
+        let private_key =
+            rsa::RsaPrivateKey::new(&mut rand::thread_rng(), 2048).expect("failed to generate a key");
+        Self {
+            pub_key: rsa::RsaPublicKey::from(&private_key),
+            pri_key: private_key,
+        }
+    }
+
+    fn verify(&mut self, raw_data: &[u8], encode_data: &[u8]) -> anyhow::Result<()> {
+        let decode_data = self
+            .pri_key
+            .decrypt(rsa::Pkcs1v15Encrypt, &encode_data[..])
+            .context("[Encrypt Failed to decrypt] ")?;
+        if decode_data.as_slice().eq(raw_data) {
+            return Ok(());
+        }
+        anyhow::bail!("[Encrypt] wrong password")
+    }
+
+    fn pub_key(&self) -> anyhow::Result<String> {
+        Ok(self.pub_key.to_pkcs1_pem(rsa::pkcs8::LineEnding::LF)?)
     }
 }

@@ -234,7 +234,7 @@ impl XunleiInstall {
 }
 
 impl Running for XunleiInstall {
-    fn launch(&self) -> anyhow::Result<()> {
+    fn run(&self) -> anyhow::Result<()> {
         self.config()?;
         self.systemd(self.install()?)
     }
@@ -262,7 +262,7 @@ impl XunleiUninstall {
 }
 
 impl Running for XunleiUninstall {
-    fn launch(&self) -> anyhow::Result<()> {
+    fn run(&self) -> anyhow::Result<()> {
         if Systemd::support() {
             Systemd::systemctl(["disable", standard::APP_NAME])?;
             Systemd::systemctl(["stop", standard::APP_NAME])?;
