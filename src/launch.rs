@@ -40,9 +40,13 @@ pub struct XunleiLauncher {
 
 impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
-        let auth_user = config.auth_user.map(|auth_user| hasher_auth_message(auth_user.as_str()));
+        let auth_user = config
+            .auth_user
+            .map(|auth_user| hasher_auth_message(auth_user.as_str()));
 
-        let auth_password = config.auth_password.map(|auth_password| hasher_auth_message(auth_password.as_str()));
+        let auth_password = config
+            .auth_password
+            .map(|auth_password| hasher_auth_message(auth_password.as_str()));
         Self {
             auth_user,
             auth_password,
@@ -192,7 +196,7 @@ impl Running for XunleiLauncher {
             match XunleiPanelServer::from(args).run() {
                 Ok(_) => {}
                 Err(e) => {
-                    log::error!("[XunleiWebUIServer] error: {}", e)
+                    log::error!("[XunleiPanelServer] error: {}", e)
                 }
             }
         });
