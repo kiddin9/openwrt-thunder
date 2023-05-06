@@ -19,20 +19,25 @@ rust-embed = "6.6.0"
 libc = "0.2.140"
 rand = "0.8.5"
 ureq = "2.6.2"
+sha3 = "0.10.8"
 indicatif = "0.17.3"
 rouille= "3.6.2"
 signal-hook = "0.3.15"
 clap = { version = "4.2.5", features = ["derive"] }
 
 [features]
-default = ["launch", "systemd"]
-embed = ["launch", "systemd"]
+default = ["launch", "systemd", "auth"]
+embed = ["launch", "systemd", "auth"]
 launch = []
 systemd = []
+auth = []
 
 [[bin]]
 name = "xunlei"
 path = "src/main.rs"
+
+[profile.dev]
+opt-level = 'z'
 
 [profile.release]
 lto = true

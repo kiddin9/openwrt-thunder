@@ -19,7 +19,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
         dir=$(pwd)
-        bash +x $dir/unpack.sh
+        bash +x $dir/unpack.sh x86_64
         current_version=$(git describe --tags --abbrev=0 | sed 's/^v//')
         new_version=$(cat bin/version)
         export new_version

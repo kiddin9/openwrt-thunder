@@ -163,6 +163,10 @@ jobs:
         target:
           - arch: "aarch64_generic"
             sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/rockchip/armv8/openwrt-sdk-22.03.2-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+          - arch: "aarch64_cortex-a53"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/bcm27xx/bcm2710/openwrt-sdk-22.03.2-bcm27xx-bcm2710_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+          - arch: "aarch64_cortex-a72"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/bcm27xx/bcm2711/openwrt-sdk-22.03.2-bcm27xx-bcm2711_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
           - arch: "x86_64"
             sdk: "https://downloads.openwrt.org/releases/18.06.9/targets/x86/64/openwrt-sdk-18.06.9-x86-64_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
     steps:

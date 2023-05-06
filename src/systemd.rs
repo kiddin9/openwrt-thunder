@@ -17,6 +17,8 @@ use crate::Running;
 
 pub struct XunleiInstall {
     description: &'static str,
+    auth_user: Option<String>,
+    auth_password: Option<String>,
     host: std::net::IpAddr,
     port: u16,
     download_path: PathBuf,
@@ -37,6 +39,8 @@ impl From<Config> for XunleiInstall {
             config_path: config.config_path,
             uid,
             gid,
+            auth_user: config.auth_user,
+            auth_password: config.auth_password,
         }
     }
 }
@@ -196,6 +200,16 @@ impl XunleiInstall {
         if Systemd::support().not() {
             return Ok(());
         }
+
+        let auth = match self.auth_user.is_some() && self.auth_password.is_some() {
+            true => format!(
+                "-U {} -W {}",
+                self.auth_user.clone().unwrap_or_default(),
+                self.auth_password.clone().unwrap_or_default()
+            ),
+            false => "".to_string(),
+        };
+
         let systemctl_unit = format!(
             r#"[Unit]
                 Description={}
@@ -204,7 +218,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart={} launch -h {} -p {} -d {} -c {}
+                ExecStart={} launch -h {} -p {} -d {} -c {} {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -217,6 +231,7 @@ impl XunleiInstall {
             self.port,
             self.download_path.display(),
             self.config_path.display(),
+            auth,
             self.uid
         );
 
@@ -234,7 +249,7 @@ impl XunleiInstall {
 }
 
 impl Running for XunleiInstall {
-    fn launch(&self) -> anyhow::Result<()> {
+    fn run(self) -> anyhow::Result<()> {
         self.config()?;
         self.systemd(self.install()?)
     }
@@ -262,7 +277,7 @@ impl XunleiUninstall {
 }
 
 impl Running for XunleiUninstall {
-    fn launch(&self) -> anyhow::Result<()> {
+    fn run(self) -> anyhow::Result<()> {
         if Systemd::support() {
             Systemd::systemctl(["disable", standard::APP_NAME])?;
             Systemd::systemctl(["stop", standard::APP_NAME])?;
