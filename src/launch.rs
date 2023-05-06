@@ -192,7 +192,7 @@ impl Running for XunleiLauncher {
             match XunleiPanelServer::from(args).run() {
                 Ok(_) => {}
                 Err(e) => {
-                    log::error!("[XunleiWebUIServer] error: {}", e)
+                    log::error!("[XunleiPanelServer] error: {}", e)
                 }
             }
         });
