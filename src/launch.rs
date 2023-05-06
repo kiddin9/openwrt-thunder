@@ -40,15 +40,9 @@ pub struct XunleiLauncher {
 
 impl From<Config> for XunleiLauncher {
     fn from(config: Config) -> Self {
-        let auth_user = match config.auth_user {
-            Some(auth_user) => Some(hasher_auth_message(&auth_user.as_str())),
-            None => None,
-        };
+        let auth_user = config.auth_user.map(|auth_user| hasher_auth_message(auth_user.as_str()));
 
-        let auth_password = match config.auth_password {
-            Some(auth_password) => Some(hasher_auth_message(&auth_password.as_str())),
-            None => None,
-        };
+        let auth_password = config.auth_password.map(|auth_password| hasher_auth_message(auth_password.as_str()));
         Self {
             auth_user,
             auth_password,
@@ -191,7 +185,7 @@ impl Running for XunleiLauncher {
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let args = (self.clone(), envs);
+        let args = (self, envs);
         // run webui service
         std::thread::spawn(move || {
             // XunleiLauncher::run_ui(host, port, ui_envs);
@@ -395,25 +389,21 @@ impl XunleiPanelServer {
 impl Running for XunleiPanelServer {
     fn run(self) -> anyhow::Result<()> {
         let sessions_storage: Mutex<HashMap<String, Session>> = Mutex::new(HashMap::new());
-        let listen = format!("{}:{}", self.host.to_string(), self.port);
+        let listen = format!("{}:{}", self.host, self.port);
         log::info!(
             "[XunleiLauncher] Start Xunlei Pannel UI, listening on {}",
             listen
         );
         rouille::start_server(listen, move |request| {
-            rouille::log(&request, io::stdout(), || {
+            rouille::log(request, io::stdout(), || {
                 rouille::session::session(request, "XUNLEI_SID", 3600, |session| {
                     let mut session_data = if session.client_has_sid() {
-                        if let Some(data) = sessions_storage.lock().unwrap().get(session.id()) {
-                            Some(data.clone())
-                        } else {
-                            None
-                        }
+                        sessions_storage.lock().unwrap().get(session.id()).cloned()
                     } else {
                         None
                     };
 
-                    let response = self.handle_route(&request, &mut session_data);
+                    let response = self.handle_route(request, &mut session_data);
 
                     if let Some(d) = session_data {
                         sessions_storage
@@ -440,8 +430,8 @@ impl From<(XunleiLauncher, HashMap<String, String>)> for XunleiPanelServer {
         Self {
             auth_user: launch.auth_user.clone(),
             auth_password: launch.auth_password.clone(),
-            host: launch.host.clone(),
-            port: launch.port.clone(),
+            host: launch.host,
+            port: launch.port,
             envs: value.1,
         }
     }
