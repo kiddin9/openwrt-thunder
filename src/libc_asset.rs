@@ -29,7 +29,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     {
         let target_file = libc_path.join(&filename);
         if !target_file.exists() {
-            let file = Asset::get(filename).context("Failed to get bin asset")?;
+            let file = Asset::get(&filename).context("Failed to get bin asset")?;
             standard::write_file(&target_file, file.data, 0o755)?;
         }
     }
