@@ -32,7 +32,8 @@ start_service() {
 
 	rm -rf /var/packages/pan-xunlei-com
 	mkdir -p /var/packages/pan-xunlei-com
-	ln -s /usr/share/xunlei /var/packages/pan-xunlei-com
+	
+	ln -s /usr/share/xunlei/target /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 	ln -s /usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
 	args="--host $host --port $port --config-path $config_path --download-path $download_path"
@@ -50,7 +51,7 @@ service_triggers() {
 
 reload_service() {
 	stop
-    for i in $(seq 1 20); do
+	for i in $(seq 1 20); do
         if [ -z "$(ps -ef | grep xunlei | grep -v grep | grep -v $$ |grep -v '/etc/rc.common' | grep -v '/sbin/service' | grep -v '/sbin/luci-reload')" ]; then
 			break
         fi
