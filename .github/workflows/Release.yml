@@ -40,6 +40,7 @@ jobs:
           echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
           if [ -z "${{ steps.tag.outputs.tag }}" ]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_ENV
           fi
 
       - name: Prebuild package
