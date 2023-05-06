@@ -14,11 +14,12 @@ use std::io::Write;
 use std::path::PathBuf;
 
 pub trait Running {
-    fn run(&self) -> anyhow::Result<()>;
+    fn run(self) -> anyhow::Result<()>;
 }
 
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
+#[command(args_conflicts_with_subcommands = true)]
 struct Opt {
     /// Enable debug
     #[clap(short, long, global = true)]
@@ -43,12 +44,12 @@ pub enum Commands {
 
 #[derive(Args)]
 pub struct Config {
-    /// Xunlei panel username
-    #[clap(short, long)]
-    username: Option<String>,
-    /// Xunlei panel password
-    #[clap(short, long)]
-    password: Option<String>,
+    /// Xunlei authentication username
+    #[arg(short = 'U', long)]
+    auth_user: Option<String>,
+    /// Xunlei authentication password
+    #[arg(short = 'W', long)]
+    auth_password: Option<String>,
     /// Xunlei Listen host
     #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
     host: std::net::IpAddr,
@@ -105,7 +106,7 @@ fn init_log(debug: bool) {
 const PORT_RANGE: std::ops::RangeInclusive<usize> = 1024..=65535;
 
 // port range parser
-pub(crate) fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
+fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
     let port: usize = s
         .parse()
         .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a port number", s)))?;
@@ -120,7 +121,7 @@ pub(crate) fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
 }
 
 // address parser
-pub(crate) fn parser_host(s: &str) -> anyhow::Result<std::net::IpAddr> {
+fn parser_host(s: &str) -> anyhow::Result<std::net::IpAddr> {
     let addr = s
         .parse::<std::net::IpAddr>()
         .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a ip address", s)))?;
