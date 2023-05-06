@@ -26,11 +26,10 @@ signal-hook = "0.3.15"
 clap = { version = "4.2.5", features = ["derive"] }
 
 [features]
-default = ["launch", "systemd", "auth"]
-embed = ["launch", "systemd", "auth"]
+default = ["launch", "systemd"]
+embed = ["launch", "systemd"]
 launch = []
 systemd = []
-auth = []
 
 [[bin]]
 name = "xunlei"
