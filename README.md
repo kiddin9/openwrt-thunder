@@ -82,7 +82,9 @@ bash +x ./unpack.sh && cargo build --release --features embed && mv target/relea
 ### OpenWrt编译
 
 ```shell
-svn co https://github.com/gngpp/nas-xunlei/trunk/openwrt  package/xunlei
+cd package
+svn co https://github.com/gngpp/nas-xunlei/trunk/openwrt
+cd -
 make menuconfig # choose LUCI->Applications->Luci-app-xunlei  
 make V=s
 ```
