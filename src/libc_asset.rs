@@ -21,7 +21,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
 
     let libc_path = std::path::Path::new(standard::SYNOPKG_LIB);
     if !libc_path.exists() {
-        std::fs::create_dir(&libc_path)?;
+        std::fs::create_dir(&libc_path).context(format!(
+            "[Asset] Failed to create directory: {}",
+            libc_path.display()
+        ))?;
     }
     for filename in Asset::iter()
         .map(|v| v.into_owned())
@@ -29,13 +32,14 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     {
         let target_file = libc_path.join(&filename);
         if !target_file.exists() {
-            let file = Asset::get(&filename).context("Failed to get bin asset")?;
+            let file = Asset::get(&filename).context("[Asset] Failed to get bin asset")?;
             standard::write_file(&target_file, file.data, 0o755)?;
         }
     }
     let sys_ld = Path::new(standard::SYS_LIB).join(LD);
     if sys_ld.exists() {
-        std::fs::remove_file(&sys_ld)?;
+        std::fs::remove_file(&sys_ld)
+            .context(format!("[Asset] Failed to remove file: {}", sys_ld.display()))?;
     }
     let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
     unsafe {
