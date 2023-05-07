@@ -38,8 +38,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     }
     let sys_ld = Path::new(standard::SYS_LIB).join(LD);
     if sys_ld.exists() {
-        std::fs::remove_file(&sys_ld)
-            .context(format!("[Asset] Failed to remove file: {}", sys_ld.display()))?;
+        std::fs::remove_file(&sys_ld).context(format!(
+            "[Asset] Failed to remove file: {}",
+            sys_ld.display()
+        ))?;
     }
     let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
     unsafe {

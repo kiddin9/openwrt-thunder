@@ -149,7 +149,6 @@ impl XunleiLauncher {
         envs.insert(String::from("GIN_MODE"), String::from("release"));
 
         #[cfg(all(target_os = "linux", target_env = "musl"))]
-        #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
         crate::libc_asset::ld_env(&mut envs)?;
         Ok(envs)
     }
@@ -294,6 +293,9 @@ impl XunleiPanelServer {
                 Ok(rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#)).with_additional_header("Content-Type","application/json; charset=utf-8").with_status_code(200))
              },
             (GET) ["/"] => {
+                Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
+            },
+            (GET) ["/login"] => {
                 Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
             },
             (GET) ["/webman/"] => {

@@ -1,7 +1,6 @@
 #[cfg(feature = "launch")]
 pub mod launch;
 #[cfg(all(target_os = "linux", target_env = "musl"))]
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub mod libc_asset;
 pub mod standard;
 #[cfg(feature = "systemd")]
