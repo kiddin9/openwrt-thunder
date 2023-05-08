@@ -4,8 +4,8 @@ msgstr "Content-Type: text/plain; charset=UTF-8\n"
 msgid "Xunlei"
 msgstr "迅雷"
 
-msgid "<a>NAS Xunlei DSM 7.x Beta Version, Invitation code (3H9F7Y6D)</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">Project GitHub URL</a>"
-msgstr "<a>NAS 迅雷 DSM 7.x 内测版，邀请码（3H9F7Y6D）</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">GitHub 项目地址</a>"
+msgid "<a>NAS Xunlei DSM 7.x Beta Version</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">Project GitHub URL</a>"
+msgstr "<a>NAS 迅雷 DSM 7.x 内测版</a> | <a href=\"https://github.com/gngpp/nas-xunlei\" target=\"_blank\">GitHub 项目地址</a>"
 
 msgid "Enabled"
 msgstr "启用"
@@ -33,6 +33,12 @@ msgstr "用户名"
 
 msgid "Password"
 msgstr "密码"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Log"
+msgstr "日志"
 
 msgid "Data Storage Path"
 msgstr "数据储存路径"
