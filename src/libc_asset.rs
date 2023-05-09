@@ -74,7 +74,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 );
                 return Ok(());
             }
-            false => {},
+            false => {}
         }
     }
     Ok(())
