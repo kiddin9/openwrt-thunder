@@ -26,7 +26,7 @@ pub const SYNOPKG_HOST: &str = "/var/packages/pan-xunlei-com/target/host";
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub const SYNOPKG_LIB: &str = "/var/packages/pan-xunlei-com/target/host/lib";
 #[cfg(all(target_os = "linux", target_env = "musl"))]
-pub const SYS_LIB_ARRAY: [&str; 2] = ["/lib", "lib64"];
+pub const SYS_LIB_ARRAY: [&str; 2] = ["/lib", "/lib64"];
 pub const SYNOPKG_CLI_WEB: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-web";
 #[cfg(target_arch = "x86_64")]
 pub const LAUNCHER_EXE: &str = "/var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.amd64";
