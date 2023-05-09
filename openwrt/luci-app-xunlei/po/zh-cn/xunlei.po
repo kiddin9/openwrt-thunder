@@ -45,3 +45,9 @@ msgstr "数据储存路径"
 
 msgid "Default Download Path"
 msgstr "默认下载路径"
+
+msgid "Note: Please change the download directory you determined for the first time, otherwise you will not be able to change the directory after startup"
+msgstr "注意: 初次启动请更改你确定的下载目录，否则启动后将无法更改目录"
+
+msgid "Note: Please keep your user data safe"
+msgstr "注意: 请保管好你的用户数据"

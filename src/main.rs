@@ -59,7 +59,7 @@ pub struct Config {
     #[clap(short, long, default_value = standard::SYNOPKG_PKGBASE)]
     config_path: PathBuf,
     /// Xunlei download directory
-    #[clap(short, long, default_value = standard::TMP_DOWNLOAD_PATH)]
+    #[clap(short, long, default_value = standard::DEFAULT_DOWNLOAD_PATH)]
     download_path: PathBuf,
 }
 

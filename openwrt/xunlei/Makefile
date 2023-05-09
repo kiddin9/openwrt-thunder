@@ -56,6 +56,12 @@ define Package/$(PKG_NAME)/postrm
   exit 0
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+  /etc/init.d/xunlei disable && /etc/init.d/xunlei enable
+  exit 0	
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xunlei $(1)/usr/bin/xunlei

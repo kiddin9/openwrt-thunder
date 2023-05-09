@@ -44,7 +44,7 @@ pub const LAUNCH_LOG_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.log";
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
 pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi/";
-pub const TMP_DOWNLOAD_PATH: &str = "/tmp/downloads";
+pub const DEFAULT_DOWNLOAD_PATH: &str = "/opt/xunlei/downloads";
 
 pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
     let filename = std::ffi::OsStr::new(target_path).as_bytes();
