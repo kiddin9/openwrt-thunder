@@ -339,42 +339,42 @@ impl XunleiPanelServer {
                 if request.header("Content-Type").unwrap_or_default().is_empty().not() {
                     cmd.env(
                         "CONTENT_TYPE",
-                        request.header("Content-Type").unwrap(),
+                        request.header("Content-Type").context("[XunleiPanelServer] Failed to set Content-Type header")?,
                     );
                 }
 
                 if request.header("content-type").unwrap_or_default().is_empty().not() {
                     cmd.env(
                         "CONTENT_TYPE",
-                        request.header("content-type").unwrap(),
+                        request.header("content-type").context("[XunleiPanelServer] Failed to set content-type header")?,
                     );
                 }
 
                 if request.header("Content-Length").unwrap_or_default().is_empty().not() {
                     cmd.env(
                         "CONTENT_LENGTH",
-                        request.header("Content-Length").unwrap(),
+                        request.header("Content-Length").context("[XunleiPanelServer] Failed to set Content-Length header")?,
                     );
                 }
 
-                let mut child = cmd.spawn().unwrap();
+                let mut child = cmd.spawn()?;
 
                 if let Some(mut body) = request.data() {
-                    std::io::copy(&mut body, child.stdin.as_mut().unwrap()).unwrap();
+                    std::io::copy(&mut body, child.stdin.as_mut().context("[XunleiPanelServer] Failed to read CGI stdin")?)?;
                 }
 
                 {
-                    let mut stdout = std::io::BufReader::new(child.stdout.unwrap());
+                    let mut stdout = std::io::BufReader::new(child.stdout.context("[XunleiPanelServer] Failed to reader CGI stdout")?);
 
                     let mut headers = Vec::new();
                     let mut status_code = 200;
-                    for header in std::io::BufRead::lines(stdout.by_ref()) {
-                        let header = header.unwrap();
+                    for header_res in std::io::BufRead::lines(stdout.by_ref()) {
+                        let header = header_res?;
                         if header.is_empty() {
                             break;
                         }
 
-                        let (header, val) = header.split_once(':').unwrap();
+                        let (header, val) = header.split_once(':').context("[XunleiPanelServer] Failed to split_once header")?;
                         let val = &val[1..];
 
                         if header == "Status" {

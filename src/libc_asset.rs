@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 #[cfg(target_arch = "x86_64")]
 #[derive(rust_embed::RustEmbed)]
 #[folder = "libc/x86_64/"]
@@ -19,41 +21,59 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     #[cfg(target_arch = "aarch64")]
     const LD: &str = "ld-linux-aarch64.so.1";
 
-    let libc_path = std::path::Path::new(standard::SYNOPKG_LIB);
-    if !libc_path.exists() {
-        std::fs::create_dir(&libc_path).context(format!(
+    let syno_lib_path = std::path::Path::new(standard::SYNOPKG_LIB);
+    if !syno_lib_path.exists() {
+        std::fs::create_dir(&syno_lib_path).context(format!(
             "[Asset] Failed to create directory: {}",
-            libc_path.display()
+            syno_lib_path.display()
         ))?;
     }
     for filename in Asset::iter()
         .map(|v| v.into_owned())
         .collect::<Vec<String>>()
     {
-        let target_file = libc_path.join(&filename);
+        let target_file = syno_lib_path.join(&filename);
         if !target_file.exists() {
             let file = Asset::get(&filename).context("[Asset] Failed to get bin asset")?;
             standard::write_file(&target_file, file.data, 0o755)?;
         }
     }
-    let sys_ld = Path::new(standard::SYS_LIB).join(LD);
-    if sys_ld.exists() {
-        std::fs::remove_file(&sys_ld).context(format!(
-            "[Asset] Failed to remove file: {}",
-            sys_ld.display()
-        ))?;
-    }
-    let syno_ld = Path::new(standard::SYNOPKG_LIB).join(LD);
-    unsafe {
-        let source_path = CString::new(syno_ld.display().to_string())?;
-        let target_path = CString::new(sys_ld.display().to_string())?;
-        if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
-            anyhow::bail!(std::io::Error::last_os_error());
+
+    for sys_lib in standard::SYS_LIB_ARRAY {
+        let sys_lib_path = Path::new(sys_lib);
+        let sys_ld_path = sys_lib_path.join(LD);
+        let output = std::process::Command::new("ldd")
+            .arg(standard::LAUNCHER_EXE)
+            .spawn()?
+            .wait_with_output()
+            .context("[Asset] Failed to read child output")?;
+        let mut stdout = String::from_utf8(output.stdout)?;
+        match output.status.success()
+            && stdout.contains(format!("{}", sys_ld_path.display()).as_str())
+        {
+            true => {
+                if sys_lib_path.exists().not() {
+                    standard::create_dir_all(&sys_lib_path, 0o755)?
+                }
+                if sys_ld_path.exists() {
+                    std::fs::remove_file(&sys_ld_path).context(format!(
+                        "[Asset] Failed to remove file: {}",
+                        sys_ld_path.display()
+                    ))?;
+                }
+                let syno_ld_path = Path::new(standard::SYNOPKG_LIB).join(LD);
+                unsafe {
+                    let source_path = CString::new(syno_ld_path.display().to_string())?;
+                    let target_path = CString::new(sys_ld_path.display().to_string())?;
+                    if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
+                        anyhow::bail!(std::io::Error::last_os_error());
+                    }
+                }
+
+                return Ok(());
+            }
+            false => anyhow::bail!("[Asset] Failed to execute ldd command"),
         }
     }
-    envs.insert(
-        String::from("LD_LIBRARY_PATH"),
-        standard::SYNOPKG_LIB.to_string(),
-    );
     Ok(())
 }
