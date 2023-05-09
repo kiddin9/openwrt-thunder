@@ -45,7 +45,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         let output = std::process::Command::new("ldd")
             .arg(standard::LAUNCHER_EXE)
             .output()
-            .expect("[Asset] CNM");
+            .expect("[Asset] Failed to execute ldd command");
         let stdout = String::from_utf8(output.stdout)?;
         match output.status.success()
             && stdout.contains(format!("{}", sys_ld_path.display()).as_str())
@@ -74,7 +74,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 );
                 return Ok(());
             }
-            false => anyhow::bail!("[Asset] Failed to execute ldd command"),
+            false => {},
         }
     }
     Ok(())
