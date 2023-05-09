@@ -10,8 +10,8 @@ get_config() {
 	config_get port $1 port 5051
 	config_get auth_user $1 auth_user ''
 	config_get auth_password $1 auth_password ''
-	config_get config_path $1 config_path "/etc/xunlei"
-	config_get download_path $1 download_path "/tmp/downloads"
+	config_get config_path $1 config_path "/opt/xunlei"
+	config_get download_path $1 download_path "/opt/xunlei/downloads"
 }
 
 start_service() {

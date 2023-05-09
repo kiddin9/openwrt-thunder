@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xunlei
 
-PKG_VERSION:=3.5.2-6
+PKG_VERSION:=3.5.2-7
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
@@ -54,6 +54,12 @@ define Package/$(PKG_NAME)/postrm
   rm -rf /usr/share/xunlei
   rm -rf /usr/syno/synoman/webman/modules
   exit 0
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+  /etc/init.d/xunlei disable && /etc/init.d/xunlei enable
+  exit 0	
 endef
 
 define Package/$(PKG_NAME)/install

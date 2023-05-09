@@ -25,10 +25,10 @@ o = s:option(Value, "auth_user", translate("Username"))
 o = s:option(Value, "auth_password", translate("Password"))
 o.password = true
 
-o = s:option(Value, "config_path", translate("Data Storage Path"))
-o.default = "/etc/xunlei"
+o = s:option(Value, "config_path", translate("Data Storage Path"), translate("Note: Please keep your user data safe"))
+o.default = "/opt/xunlei"
 
-o = s:option(Value, "download_path", translate("Default Download Path"))
-o.default = "/tmp/downloads"
+o = s:option(Value, "download_path", translate("Default Download Path"), translate("Note: Please change the download directory you determined for the first time, otherwise you will not be able to change the directory after startup"))
+o.default = "/opt/xunlei/downloads"
 
 return m
