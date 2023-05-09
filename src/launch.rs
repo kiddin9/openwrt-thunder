@@ -360,11 +360,11 @@ impl XunleiPanelServer {
                 let mut child = cmd.spawn()?;
 
                 if let Some(mut body) = request.data() {
-                    std::io::copy(&mut body, child.stdin.as_mut().context("[XunleiPanelServer] Failed to read CGI stdin")?)?;
+                    std::io::copy(&mut body, child.stdin.take().as_mut().context("[XunleiPanelServer] Failed to read CGI stdin")?)?;
                 }
 
                 {
-                    let mut stdout = std::io::BufReader::new(child.stdout.context("[XunleiPanelServer] Failed to reader CGI stdout")?);
+                    let mut stdout = std::io::BufReader::new(child.stdout.take().context("[XunleiPanelServer] Failed to reader CGI stdout")?);
 
                     let mut headers = Vec::new();
                     let mut status_code = 200;
