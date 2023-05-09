@@ -44,10 +44,9 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         let sys_ld_path = sys_lib_path.join(LD);
         let output = std::process::Command::new("ldd")
             .arg(standard::LAUNCHER_EXE)
-            .spawn()?
-            .wait_with_output()
-            .context("[Asset] Failed to read child output")?;
-        let mut stdout = String::from_utf8(output.stdout)?;
+            .output()
+            .expect("[Asset] CNM");
+        let stdout = String::from_utf8(output.stdout)?;
         match output.status.success()
             && stdout.contains(format!("{}", sys_ld_path.display()).as_str())
         {
@@ -69,7 +68,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                         anyhow::bail!(std::io::Error::last_os_error());
                     }
                 }
-
+                envs.insert(
+                    String::from("LD_LIBRARY_PATH"),
+                    standard::SYNOPKG_LIB.to_string(),
+                );
                 return Ok(());
             }
             false => anyhow::bail!("[Asset] Failed to execute ldd command"),
