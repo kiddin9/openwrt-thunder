@@ -278,7 +278,7 @@ impl XunleiUninstall {
         if self.clear {
             let path = Path::new(standard::DEFAULT_CONFIG_PATH);
             if path.exists() {
-                std::fs::remove_dir(Path::new(path))?
+                std::fs::remove_dir_all(Path::new(path))?
             }
         }
 
