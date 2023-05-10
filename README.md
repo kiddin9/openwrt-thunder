@@ -92,3 +92,4 @@ make V=s
 ### FQA
  - 如果你是升级了最新版本无法启动/或者装过别人打包的xunlei，请先SSH执行`service xunlei disable && service xunlei enable`
  - 迅雷插件依赖bash，系统需要安装bash
+ - alpine需要自己挂载分区，和安装bash（apk add bash）
