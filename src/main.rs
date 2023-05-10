@@ -35,7 +35,11 @@ pub enum Commands {
     Install(Config),
     #[cfg(feature = "systemd")]
     /// Uninstall xunlei
-    Uninstall,
+    Uninstall {
+        /// Clear xunlei default config directory
+        #[clap(short, long)]
+        clear: bool,
+    },
     #[cfg(feature = "launch")]
     /// Launch xunlei
     Launch(Config),
@@ -56,7 +60,7 @@ pub struct Config {
     #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
     /// Xunlei config directory
-    #[clap(short, long, default_value = standard::SYNOPKG_PKGBASE)]
+    #[clap(short, long, default_value = standard::DEFAULT_CONFIG_PATH)]
     config_path: PathBuf,
     /// Xunlei download directory
     #[clap(short, long, default_value = standard::DEFAULT_DOWNLOAD_PATH)]
@@ -72,8 +76,8 @@ fn main() -> anyhow::Result<()> {
             systemd::XunleiInstall::from(config).run()?;
         }
         #[cfg(feature = "systemd")]
-        Commands::Uninstall => {
-            systemd::XunleiUninstall {}.run()?;
+        Commands::Uninstall { clear } => {
+            systemd::XunleiUninstall::from(clear).run()?;
         }
         #[cfg(feature = "launch")]
         Commands::Launch(config) => {
