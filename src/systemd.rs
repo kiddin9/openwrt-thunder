@@ -276,7 +276,10 @@ impl XunleiUninstall {
 
         // Clear xunlei default config directory
         if self.clear {
-            std::fs::remove_dir(Path::new(standard::DEFAULT_CONFIG_PATH))?
+            let path = Path::new(standard::DEFAULT_CONFIG_PATH);
+            if path.exists() {
+                std::fs::remove_dir(Path::new(path))?
+            }
         }
 
         Ok(())
