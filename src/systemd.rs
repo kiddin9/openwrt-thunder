@@ -255,21 +255,28 @@ impl Running for XunleiInstall {
     }
 }
 
-pub struct XunleiUninstall;
+pub struct XunleiUninstall {
+    clear: bool,
+}
 
 impl XunleiUninstall {
     fn uninstall(&self) -> anyhow::Result<()> {
         if Systemd::support() {
-            let path = PathBuf::from(standard::SYSTEMCTL_UNIT_FILE);
+            let path = Path::new(standard::SYSTEMCTL_UNIT_FILE);
             if path.exists() {
                 std::fs::remove_file(path)?;
                 log::info!("[XunleiUninstall] Uninstall xunlei service");
             }
         }
-        let path = PathBuf::from(standard::SYNOPKG_PKGBASE);
+        let path = Path::new(standard::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
             log::info!("[XunleiUninstall] Uninstall xunlei package");
+        }
+
+        // Clear xunlei default config directory
+        if self.clear {
+            std::fs::remove_dir(Path::new(standard::DEFAULT_CONFIG_PATH))?
         }
 
         Ok(())
@@ -285,6 +292,12 @@ impl Running for XunleiUninstall {
         }
         self.uninstall()?;
         Ok(())
+    }
+}
+
+impl From<bool> for XunleiUninstall {
+    fn from(value: bool) -> Self {
+        XunleiUninstall { clear: value }
     }
 }
 
