@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xunlei
 
-PKG_VERSION:=3.5.2-8
+PKG_VERSION:=3.5.2-9
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
