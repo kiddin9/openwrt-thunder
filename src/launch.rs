@@ -149,6 +149,7 @@ impl XunleiLauncher {
         envs.insert(String::from("GIN_MODE"), String::from("release"));
 
         #[cfg(all(target_os = "linux", target_env = "musl"))]
+        #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
         crate::libc_asset::ld_env(&mut envs)?;
         Ok(envs)
     }

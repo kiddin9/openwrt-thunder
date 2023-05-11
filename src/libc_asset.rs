@@ -1,10 +1,12 @@
 use std::ops::Not;
 
+#[cfg(all(target_os = "linux", target_env = "musl"))]
 #[cfg(target_arch = "x86_64")]
 #[derive(rust_embed::RustEmbed)]
 #[folder = "libc/x86_64/"]
 struct Asset;
 
+#[cfg(all(target_os = "linux", target_env = "musl"))]
 #[cfg(target_arch = "aarch64")]
 #[derive(rust_embed::RustEmbed)]
 #[folder = "libc/aarch64/"]
