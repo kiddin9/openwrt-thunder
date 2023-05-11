@@ -9,11 +9,11 @@
     <img src="https://img.shields.io/github/downloads/gngpp/nas-xunlei/total?style=flat&?">
   </a>
 
-nas-xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
+nas-xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpine）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
 
-- 只支持**X86_64**/**aarch64**
-- 支持glibc/musl
-- 内侧邀请码（3H9F7Y6D）
+- 只支持**X86_64/aarch64**
+- 支持**glibc/musl**
+- 内侧邀请码（**3H9F7Y6D**），内侧码申请快速通道：https://t.cn/A6fhraWZ
 
 ```shell
 ❯ ./xunlei                   
@@ -32,14 +32,43 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
+❯ ./xunlei install --help
+Install xunlei
+
+Usage: xunlei install [OPTIONS]
+
+Options:
+  -d, --debug                          Enable debug
+  -U, --auth-user <AUTH_USER>          Xunlei authentication username
+  -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
+  -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
+  -p, --port <PORT>                    Xunlei Listen port [default: 5055]
+  -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
+  -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
+  -h, --help                           Print help
+
+❯ ./xunlei launch --help 
+Launch xunlei
+
+Usage: xunlei launch [OPTIONS]
+
+Options:
+  -d, --debug                          Enable debug
+  -U, --auth-user <AUTH_USER>          Xunlei authentication username
+  -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
+  -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
+  -p, --port <PORT>                    Xunlei Listen port [default: 5055]
+  -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
+  -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
+  -h, --help                           Print help
 ```
 
 ### Ubuntu(Other Linux)
 GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
 ```shell
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/xunlei_3.5.2_amd64.deb
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-9/xunlei_3.5.2-9_amd64.deb
 
-dpkg -i xunlei_3.5.2_amd64.deb
+dpkg -i xunlei_3.5.2-9_amd64.deb
 
 # 安装和运行迅雷程序
 xunlei install
@@ -53,13 +82,13 @@ xunlei launch
 GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，可以下载后使用 opkg 安装，以 nanopi r4s 为例：
 
 ```shell
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/xunlei_3.5.2-1_aarch64_generic.ipk
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/luci-app-xunlei_1.0.1_all.ipk
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2/luci-i18n-xunlei-zh-cn_1.0.1-1_all.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-9/xunlei_3.5.2-9_aarch64_generic.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-9/luci-app-xunlei_1.0.1-5-1_all.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-9/luci-i18n-xunlei-zh-cn_1.0.1-5-1_all.ipk
 
-opkg install xunlei_3.5.2-1_aarch64_generic.ipk
-opkg install luci-app-xunlei_1.0.1_all.ipk
-opkg install luci-i18n-xunlei-zh-cn_1.0.1-1_all.ipk
+opkg install xunlei_3.5.2-9_aarch64_generic.ipk
+opkg install luci-app-xunlei_1.0.1-5-1_all.ipk
+opkg install luci-i18n-xunlei-zh-cn_1.0.1-5-1_all.ipk
 ```
 
 ### 自行编译
@@ -85,7 +114,7 @@ bash +x ./unpack.sh && cargo build --release --features embed && mv target/relea
 cd package
 svn co https://github.com/gngpp/nas-xunlei/trunk/openwrt
 cd -
-make menuconfig # choose LUCI->Applications->Luci-app-xunlei  
+make menuconfig # choose LUCI->Applications->luci-app-xunlei  
 make V=s
 ```
 
