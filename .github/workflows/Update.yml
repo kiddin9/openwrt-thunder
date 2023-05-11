@@ -18,13 +18,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
-        dir=$(pwd)
-        bash +x $dir/unpack.sh x86_64
-        current_version=$(git describe --tags --abbrev=0 | sed 's/^v//')
+        bash +x unpack.sh x86_64
+        current_version=$(git describe --tags --abbrev=0 | sed 's/^v//' | sed 's/-.*//')
         new_version=$(cat bin/version)
-        export new_version
-        sed 's/$current_version/$new_version/g' Cargo.toml
-        sed 's/$current_version/$new_version/g' openwrt/xunlei/Makefile
+        sed -i 's/$current_version/$new_version/g' Cargo.toml
+        sed -i 's/$current_version/$new_version/g' openwrt/xunlei/Makefile
         echo "new_version=$new_version" >> $GITHUB_ENV
         echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
