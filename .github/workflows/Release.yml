@@ -49,7 +49,7 @@ jobs:
           cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
 
-          cargo zigbuild --no-default-features --features launch
+          cargo zigbuild --release --no-default-features --features launch
           cargo deb --no-build --no-strip
           cargo generate-rpm --payload-compress none
 
