@@ -1,6 +1,6 @@
-/target
-/xunlei
+target
+xunlei
 .idea
-./bin
-./uploads
+bin
+uploads
 Cargo.lock
