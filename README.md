@@ -47,6 +47,16 @@ Options:
   -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
   -h, --help                           Print help
 
+❯ ./xunlei uninstall --help
+Uninstall xunlei
+
+Usage: xunlei uninstall [OPTIONS]
+
+Options:
+  -c, --clear  Clear xunlei default config directory
+  -d, --debug  Enable debug
+  -h, --help   Print help
+
 ❯ ./xunlei launch --help 
 Launch xunlei
 
@@ -66,7 +76,7 @@ Options:
 ### Ubuntu(Other Linux)
 GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
 ```shell
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-9/xunlei_3.5.2-9_amd64.deb
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-10/xunlei-embed-3.5.2-10.aarch64-unknown-linux-gnu.deb
 
 dpkg -i xunlei_3.5.2-9_amd64.deb
 
