@@ -64,8 +64,8 @@ impl XunleiLauncher {
         let var_path = Path::new(standard::SYNOPKG_VAR);
         if var_path.exists().not() {
             std::fs::create_dir(var_path)?;
-            std::fs::set_permissions(var_path, std::fs::Permissions::from_mode(0o755)).context(
-                format!("Failed to set permissions: {} -- 755", var_path.display()),
+            std::fs::set_permissions(var_path, std::fs::Permissions::from_mode(0o777)).context(
+                format!("Failed to set permissions: {} -- 777", var_path.display()),
             )?;
         }
         let child_process = std::process::Command::new(standard::LAUNCHER_EXE)

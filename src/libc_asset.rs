@@ -88,7 +88,9 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
 
 #[cfg(target_os = "linux")]
 fn is_musl() -> anyhow::Result<bool> {
-    let output = std::process::Command::new("ldd").arg("--version").output()?;
+    let output = std::process::Command::new("ldd")
+        .arg("--version")
+        .output()?;
     let stdout = String::from_utf8_lossy(&output.stdout);
     Ok(stdout.to_ascii_lowercase().contains("musl"))
 }
