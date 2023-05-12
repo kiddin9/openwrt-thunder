@@ -1,5 +1,3 @@
-use std::ops::Not;
-
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 #[cfg(target_arch = "x86_64")]
 #[derive(rust_embed::RustEmbed)]
@@ -12,11 +10,17 @@ struct Asset;
 #[folder = "libc/aarch64/"]
 struct Asset;
 
+#[cfg(target_os = "linux")]
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
     use crate::standard;
     use anyhow::Context;
     use std::ffi::CString;
+    use std::ops::Not;
     use std::path::Path;
+
+    if is_musl()?.not() {
+        return Ok(());
+    }
 
     #[cfg(target_arch = "x86_64")]
     const LD: &str = "ld-linux-x86-64.so.2";
@@ -80,4 +84,11 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         }
     }
     Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn is_musl() -> anyhow::Result<bool> {
+    let output = std::process::Command::new("ldd").arg("--version").output()?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.to_ascii_lowercase().contains("musl"))
 }
