@@ -24,7 +24,6 @@ jobs:
       - name: Install depends
         run: |
           apt update && apt install upx rename wget git -y
-          mkdir uploads
 
       - name: Get tag
         if: startsWith(github.ref, 'refs/tags/')
@@ -42,25 +41,7 @@ jobs:
             echo "tag=latest" >> $GITHUB_ENV
           fi
 
-      - name: Prebuild package
-        id: prebuild
-        run: |
-          cargo zigbuild --release
-          cargo deb --no-build --no-strip
-          cargo generate-rpm --payload-compress none
-
-          cargo zigbuild --release --no-default-features --features launch
-          cargo deb --no-build --no-strip
-          cargo generate-rpm --payload-compress none
-
-          cargo zigbuild --release --no-default-features --features embed
-          cargo deb --no-build --no-strip
-          cargo generate-rpm --payload-compress none
-
-          echo "SUCCESS=success" >> $GITHUB_OUTPUT
-
       - name: Build openwrt package
-        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
         shell: bash
         run: |
           arch=x86_64 bash +x unpack.sh
@@ -87,48 +68,7 @@ jobs:
         if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
         shell: bash
         run: |
-          root=$(pwd)
-          target_list=(x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl)
-          for target in ${target_list[@]}
-          do
-          cargo zigbuild --release --target=$target
-          upx target/$target/release/xunlei
-          cargo deb --target=$target --no-build --no-strip
-          cargo generate-rpm --target=$target --payload-compress none
-          cd target/$target/release
-            tar czvf xunlei-${{ env.tag }}.$target.tar.gz xunlei
-            shasum -a 256 xunlei-${{ env.tag }}.$target.tar.gz > xunlei-${{ env.tag }}.$target.tar.gz.sha256
-            mv xunlei-${{ env.tag }}.$target.tar.gz $root/uploads/
-            mv xunlei-${{ env.tag }}.$target.tar.gz.sha256 $root/uploads/
-          cd -
-          mv target/$target/debian/* $root/uploads/
-          mv target/$target/generate-rpm/* $root/uploads/
-
-          if [[ $target == *"aarch64"* ]]; then
-              arch=aarch64 bash +x unpack.sh && cargo zigbuild --release --target=$target --no-default-features --features embed
-          else 
-              bash +x unpack.sh && cargo zigbuild --release --target=$target --no-default-features --features embed
-          fi
-          upx target/$target/release/xunlei
-          cargo deb --target=$target --no-build --no-strip
-          cargo generate-rpm --target=$target --payload-compress none
-          cd target/$target/release
-            tar czvf xunlei-embed-${{ env.tag }}.$target.tar.gz xunlei
-            shasum -a 256 xunlei-embed-${{ env.tag }}.$target.tar.gz > xunlei-embed-${{ env.tag }}.$target.tar.gz.sha256
-            mv xunlei-embed-${{ env.tag }}.$target.tar.gz $root/uploads/
-            mv xunlei-embed-${{ env.tag }}.$target.tar.gz.sha256 $root/uploads/
-          cd -
-          cd target/$target/debian
-            rename 's/xunlei/xunlei-embed/' xunlei*.deb
-            mv ./* $root/uploads/
-          cd -
-          cd target/$target/generate-rpm
-            rename 's/xunlei/xunlei-embed/' xunlei*.rpm
-            mv ./* $root/uploads/
-          cd -
-
-          ls -lah uploads
-          done
+          bash +x build.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
