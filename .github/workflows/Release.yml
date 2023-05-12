@@ -44,6 +44,8 @@ jobs:
       - name: Build openwrt package
         shell: bash
         run: |
+          mkdir uploads
+          
           arch=x86_64 bash +x unpack.sh
           mkdir -p xunlei-openwrt-${{ env.tag }}-x86_64/bin
           mv bin/* xunlei-openwrt-${{ env.tag }}-x86_64/bin/
