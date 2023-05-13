@@ -19,9 +19,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     use std::path::Path;
 
     if is_musl()?.not() {
+        log::debug!("[Asset] Run on glibc environment");
         return Ok(());
     }
-
+    log::debug!("[Asset] Run on musl environment");
     #[cfg(target_arch = "x86_64")]
     const LD: &str = "ld-linux-x86-64.so.2";
     #[cfg(target_arch = "aarch64")]
@@ -53,6 +54,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
             .output()
             .expect("[Asset] Failed to execute ldd command");
         let stdout = String::from_utf8(output.stdout)?;
+        log::debug!("[Asset] ldd stdout: {}", &stdout);
         match output.status.success()
             && stdout.contains(format!("{}", sys_ld_path.display()).as_str())
         {
@@ -60,24 +62,21 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 if sys_lib_path.exists().not() {
                     standard::create_dir_all(&sys_lib_path, 0o755)?
                 }
-                if sys_ld_path.exists() {
-                    std::fs::remove_file(&sys_ld_path).context(format!(
-                        "[Asset] Failed to remove file: {}",
-                        sys_ld_path.display()
-                    ))?;
-                }
-                let syno_ld_path = Path::new(standard::SYNOPKG_LIB).join(LD);
-                unsafe {
-                    let source_path = CString::new(syno_ld_path.display().to_string())?;
-                    let target_path = CString::new(sys_ld_path.display().to_string())?;
-                    if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
-                        anyhow::bail!(std::io::Error::last_os_error());
+                if sys_ld_path.exists().not() {
+                    let syno_ld_path = Path::new(standard::SYNOPKG_LIB).join(LD);
+                    unsafe {
+                        let source_path = CString::new(syno_ld_path.display().to_string())?;
+                        let target_path = CString::new(sys_ld_path.display().to_string())?;
+                        if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
+                            anyhow::bail!(std::io::Error::last_os_error());
+                        }
                     }
                 }
                 envs.insert(
                     String::from("LD_LIBRARY_PATH"),
                     standard::SYNOPKG_LIB.to_string(),
                 );
+                log::info!("LD_LIBRARY_PATH={}", standard::SYNOPKG_LIB);
                 return Ok(());
             }
             false => {}
@@ -86,11 +85,15 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
 fn is_musl() -> anyhow::Result<bool> {
-    let output = std::process::Command::new("ldd")
-        .arg("--version")
-        .output()?;
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok(stdout.to_ascii_lowercase().contains("musl"))
+    let output = std::process::Command::new("sh")
+        .args(["-c", "ldd --version"])
+        .output()
+        .unwrap();
+    let out = match output.status.success() {
+        true => String::from_utf8(output.stdout).unwrap(),
+        false => String::from_utf8(output.stderr).unwrap(),
+    };
+    log::debug!("[Asset] ldd --version stdout: {}", out);
+    Ok(out.to_lowercase().contains("musl"))
 }

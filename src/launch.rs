@@ -176,7 +176,7 @@ impl Running for XunleiLauncher {
                         signal_hook::consts::SIGINT
                         | signal_hook::consts::SIGHUP
                         | signal_hook::consts::SIGTERM => {
-                            unsafe { libc::kill(backend_process.id() as i32, libc::SIGTERM) };
+                            unsafe { libc::kill(backend_process.id() as i32, libc::SIGKILL) };
                             log::info!("[XunleiLauncher] The backend service has been terminated");
                             break;
                         }
