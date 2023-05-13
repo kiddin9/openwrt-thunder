@@ -21,7 +21,7 @@ pub trait Running {
 #[command(args_conflicts_with_subcommands = true)]
 struct Opt {
     /// Enable debug
-    #[clap(short, long, global = true)]
+    #[clap(long, global = true)]
     debug: bool,
 
     #[clap(subcommand)]
