@@ -67,7 +67,6 @@ jobs:
           mv xunlei-openwrt-${{ env.tag }}-aarch64.tar.gz.sha256 uploads/
 
       - name: Build package
-        if: steps.prebuild.outputs.SUCCESS == 'success' && !cancelled()
         shell: bash
         run: |
           bash +x build.sh
