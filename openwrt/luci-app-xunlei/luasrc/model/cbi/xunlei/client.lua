@@ -28,7 +28,10 @@ o.password = true
 o = s:option(Value, "config_path", translate("Data Storage Path"), translate("Note: Please keep your user data safe"))
 o.default = "/opt/xunlei"
 
-o = s:option(Value, "download_path", translate("Default Download Path"), translate("Note: Please change the download directory you determined for the first time, otherwise you will not be able to change the directory after startup"))
+o = s:option(Value, "download_path", translate("Default Download Path"), translate("Note: the default storage path, after boot will mount to the bound directory"))
 o.default = "/opt/xunlei/downloads"
+
+o = s:option(Value, "mount_bind_download_path", translate("Default Mount Bind Download Path"), translate("Note: Please change the binding download directory you determine at the first startup. It will bind to the real storage path after startup, otherwise it will not be able to change the binding directory after startup"))
+o.default = "/xunlei"
 
 return m

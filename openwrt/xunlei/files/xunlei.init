@@ -12,6 +12,7 @@ get_config() {
 	config_get auth_password $1 auth_password ''
 	config_get config_path $1 config_path "/opt/xunlei"
 	config_get download_path $1 download_path "/opt/xunlei/downloads"
+	config_get mount_bind_download_path $1 mount_bind_download_path "/xunlei"
 }
 
 start_service() {
@@ -38,7 +39,7 @@ start_service() {
 	ln -s /usr/share/xunlei/target /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 	ln -s /usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
-	args="--host $host --port $port --config-path $config_path --download-path $download_path"
+	args="--host $host --port $port --config-path $config_path --download-path $download_path --mount-bind-download-path $mount_bind_download_path"
 
 	if [ -n "$auth_user" ] && [ -n "$auth_password" ]; then
 		args="$args -U $auth_user -W $auth_password"
