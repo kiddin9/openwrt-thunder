@@ -1,12 +1,3 @@
-use std::{
-    borrow::Cow,
-    io::Write,
-    os::unix::prelude::{OsStrExt, PermissionsExt},
-    path::{Path, PathBuf},
-};
-
-use anyhow::Context;
-
 #[cfg(target_arch = "aarch64")]
 pub const SUPPORT_ARCH: &str = "armv8";
 #[cfg(target_arch = "x86_64")]
@@ -45,46 +36,5 @@ pub const LAUNCH_LOG_FILE: &str =
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
 pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi/";
 pub const DEFAULT_DOWNLOAD_PATH: &str = "/opt/xunlei/downloads";
+pub const DEFAULT_BIND_DOWNLOAD_PATH: &str = "/xunlei";
 pub const DEFAULT_CONFIG_PATH: &str = "/opt/xunlei";
-
-pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
-    let filename = std::ffi::OsStr::new(target_path).as_bytes();
-    let c_filename = std::ffi::CString::new(filename)?;
-
-    let res = unsafe { libc::chown(c_filename.as_ptr(), uid, gid) };
-    if res != 0 {
-        let errno = std::io::Error::last_os_error();
-        return Err(anyhow::anyhow!("chown {} error: {}", target_path, errno));
-    }
-    Ok(())
-}
-
-pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyhow::Result<()> {
-    let mut target_file = std::fs::File::create(target_path)?;
-    target_file
-        .write_all(&content)
-        .context(format!("write data to {} error", target_path.display()))?;
-    std::fs::set_permissions(target_path, std::fs::Permissions::from_mode(mode)).context(
-        format!(
-            "Failed to set permissions: {} -- {}",
-            target_path.display(),
-            mode
-        ),
-    )?;
-
-    Ok(())
-}
-
-pub fn create_dir_all(target_path: &Path, mode: u32) -> anyhow::Result<()> {
-    std::fs::create_dir_all(target_path).context(format!(
-        "Failed to create folder: {}",
-        target_path.display()
-    ))?;
-    std::fs::set_permissions(target_path, std::fs::Permissions::from_mode(mode)).context(
-        format!(
-            "Failed to set permissions: {} -- 755",
-            target_path.display()
-        ),
-    )?;
-    Ok(())
-}

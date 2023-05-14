@@ -8,11 +8,11 @@ use std::sync::Mutex;
 use anyhow::Context;
 use signal_hook::iterator::Signals;
 
-use crate::{standard, Config, Running};
+use crate::util;
+use crate::{env, Config, Running};
 use std::{
     io::Read,
     ops::Not,
-    os::unix::prelude::PermissionsExt,
     path::{Path, PathBuf},
     process::Stdio,
 };
@@ -36,6 +36,7 @@ pub struct XunleiLauncher {
     port: u16,
     download_path: PathBuf,
     config_path: PathBuf,
+    mount_bind_download_path: PathBuf,
 }
 
 impl From<Config> for XunleiLauncher {
@@ -54,49 +55,22 @@ impl From<Config> for XunleiLauncher {
             port: config.port,
             download_path: config.download_path,
             config_path: config.config_path,
+            mount_bind_download_path: config.mount_bind_download_path,
         }
     }
 }
 
 impl XunleiLauncher {
-    fn run_backend(envs: HashMap<String, String>) -> anyhow::Result<std::process::Child> {
-        log::info!("[XunleiLauncher] Start Xunlei Engine");
-        let var_path = Path::new(standard::SYNOPKG_VAR);
-        if var_path.exists().not() {
-            std::fs::create_dir(var_path)?;
-            std::fs::set_permissions(var_path, std::fs::Permissions::from_mode(0o777)).context(
-                format!("Failed to set permissions: {} -- 777", var_path.display()),
-            )?;
-        }
-        let child_process = std::process::Command::new(standard::LAUNCHER_EXE)
-            .args([
-                format!("-launcher_listen={}", standard::LAUNCHER_SOCK),
-                format!("-pid={}", standard::PID_FILE),
-                format!("-logfile={}", standard::LAUNCH_LOG_FILE),
-            ])
-            .current_dir(standard::SYNOPKG_PKGDEST)
-            .envs(&envs)
-            // Join the parent process group by default
-            .spawn()
-            .expect("failed to spawn child process");
-        let child_pid = child_process.id() as libc::pid_t;
-        log::info!("[XunleiLauncher] Backend pid: {}", child_pid);
-        Ok(child_process)
-    }
-
     fn envs(&self) -> anyhow::Result<HashMap<String, String>> {
         let mut envs = HashMap::new();
-        envs.insert(
-            String::from("DriveListen"),
-            String::from(standard::SOCK_FILE),
-        );
+        envs.insert(String::from("DriveListen"), String::from(env::SOCK_FILE));
         envs.insert(
             String::from("OS_VERSION"),
             format!(
                 "dsm {}.{}-{}",
-                standard::SYNOPKG_DSM_VERSION_MAJOR,
-                standard::SYNOPKG_DSM_VERSION_MINOR,
-                standard::SYNOPKG_DSM_VERSION_BUILD
+                env::SYNOPKG_DSM_VERSION_MAJOR,
+                env::SYNOPKG_DSM_VERSION_MINOR,
+                env::SYNOPKG_DSM_VERSION_BUILD
             ),
         );
         envs.insert(String::from("HOME"), self.config_path.display().to_string());
@@ -106,46 +80,43 @@ impl XunleiLauncher {
         );
         envs.insert(
             String::from("DownloadPATH"),
-            self.download_path.display().to_string(),
+            self.mount_bind_download_path.display().to_string(),
         );
         envs.insert(
             String::from("SYNOPKG_DSM_VERSION_MAJOR"),
-            String::from(standard::SYNOPKG_DSM_VERSION_MAJOR),
+            String::from(env::SYNOPKG_DSM_VERSION_MAJOR),
         );
         envs.insert(
             String::from("SYNOPKG_DSM_VERSION_MINOR"),
-            String::from(standard::SYNOPKG_DSM_VERSION_MINOR),
+            String::from(env::SYNOPKG_DSM_VERSION_MINOR),
         );
         envs.insert(
             String::from("SYNOPKG_DSM_VERSION_BUILD"),
-            String::from(standard::SYNOPKG_DSM_VERSION_BUILD),
+            String::from(env::SYNOPKG_DSM_VERSION_BUILD),
         );
 
         envs.insert(
             String::from("SYNOPKG_PKGDEST"),
-            String::from(standard::SYNOPKG_PKGDEST),
+            String::from(env::SYNOPKG_PKGDEST),
         );
         envs.insert(
             String::from("SYNOPKG_PKGNAME"),
-            String::from(standard::SYNOPKG_PKGNAME),
+            String::from(env::SYNOPKG_PKGNAME),
         );
-        envs.insert(
-            String::from("SVC_CWD"),
-            String::from(standard::SYNOPKG_PKGDEST),
-        );
+        envs.insert(String::from("SVC_CWD"), String::from(env::SYNOPKG_PKGDEST));
 
-        envs.insert(String::from("PID_FILE"), String::from(standard::PID_FILE));
-        envs.insert(String::from("ENV_FILE"), String::from(standard::ENV_FILE));
-        envs.insert(String::from("LOG_FILE"), String::from(standard::LOG_FILE));
+        envs.insert(String::from("PID_FILE"), String::from(env::PID_FILE));
+        envs.insert(String::from("ENV_FILE"), String::from(env::ENV_FILE));
+        envs.insert(String::from("LOG_FILE"), String::from(env::LOG_FILE));
         envs.insert(
             String::from("LAUNCH_LOG_FILE"),
-            String::from(standard::LAUNCH_LOG_FILE),
+            String::from(env::LAUNCH_LOG_FILE),
         );
         envs.insert(
             String::from("LAUNCH_PID_FILE"),
-            String::from(standard::LAUNCH_PID_FILE),
+            String::from(env::LAUNCH_PID_FILE),
         );
-        envs.insert(String::from("INST_LOG"), String::from(standard::INST_LOG));
+        envs.insert(String::from("INST_LOG"), String::from(env::INST_LOG));
         envs.insert(String::from("GIN_MODE"), String::from("release"));
 
         #[cfg(all(target_os = "linux", target_env = "musl"))]
@@ -158,46 +129,25 @@ impl Running for XunleiLauncher {
     fn run(self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
 
-        let mut signals = Signals::new([
-            signal_hook::consts::SIGINT,
-            signal_hook::consts::SIGHUP,
-            signal_hook::consts::SIGTERM,
-        ])?;
-
         let envs = self.envs()?;
-        let backend_envs = envs.clone();
+
+        let args = (
+            self.download_path.clone(),
+            self.mount_bind_download_path.clone(),
+            envs.clone(),
+        );
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
-            .spawn(move || {
-                let backend_process = XunleiLauncher::run_backend(backend_envs)
-                    .expect("[XunleiLauncher] An error occurred executing the backend process");
-                for signal in signals.forever() {
-                    match signal {
-                        signal_hook::consts::SIGINT
-                        | signal_hook::consts::SIGHUP
-                        | signal_hook::consts::SIGTERM => {
-                            unsafe { libc::kill(backend_process.id() as i32, libc::SIGINT) };
-                            log::info!("[XunleiLauncher] The backend service has been terminated");
-                            break;
-                        }
-                        _ => {
-                            log::warn!("[XunleiLauncher] The system receives an unprocessed signal")
-                        }
-                    }
-                }
+            .spawn(move || match XunleiBackendServer::from(args).run() {
+                Ok(_) => {}
+                Err(e) => log::error!("[XunleiBackendServer] error: {}", e),
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
         let args = (self, envs);
-        // run webui service
-        std::thread::spawn(move || {
-            // XunleiLauncher::run_ui(host, port, ui_envs);
-            match XunleiPanelServer::from(args).run() {
-                Ok(_) => {}
-                Err(e) => {
-                    log::error!("[XunleiPanelServer] error: {}", e)
-                }
-            }
+        std::thread::spawn(move || match XunleiPanelServer::from(args).run() {
+            Ok(_) => {}
+            Err(e) => log::error!("[XunleiPanelServer] error: {}", e),
         });
 
         backend_thread
@@ -206,6 +156,142 @@ impl Running for XunleiLauncher {
 
         log::info!("[XunleiLauncher] All services have been complete");
         Ok(())
+    }
+}
+
+use libc::{mount, umount2, MNT_DETACH, MS_BIND};
+use std::ffi::CString;
+use std::os::raw::c_int;
+use std::ptr;
+
+struct XunleiBackendServer {
+    download_path: PathBuf,
+    mount_bind_download_path: PathBuf,
+    envs: HashMap<String, String>,
+}
+
+impl XunleiBackendServer {
+    fn bind_mount(source: &Path, target: &Path) -> c_int {
+        if Self::umount(target) == 0 {
+            log::info!(
+                "[XunleiBackendServer] Unmount {} succeeded.",
+                target.display()
+            )
+        }
+        let source_cstr =
+            CString::new(format!("{}", source.display())).expect("source CString new error");
+        let target_cstr =
+            CString::new(format!("{}", target.display())).expect("target CString new error");
+        unsafe {
+            mount(
+                source_cstr.as_ptr(),
+                target_cstr.as_ptr(),
+                ptr::null(),
+                MS_BIND,
+                ptr::null(),
+            )
+        }
+    }
+
+    fn umount(target: &Path) -> c_int {
+        let target_cstr =
+            CString::new(format!("{}", target.display())).expect("target CString new error");
+        unsafe { umount2(target_cstr.as_ptr(), MNT_DETACH) }
+    }
+}
+
+impl Running for XunleiBackendServer {
+    fn run(self) -> anyhow::Result<()> {
+        let var_path = Path::new(env::SYNOPKG_VAR);
+        if var_path.exists().not() {
+            util::create_dir_all(var_path, 0o777)?;
+        }
+
+        // mount bind downloads directory
+        if self.mount_bind_download_path.exists().not() {
+            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
+        }
+
+        // the real store download path
+        if self.download_path.exists().not() {
+            util::create_dir_all(&self.download_path, 0o755)?;
+        }
+
+        match Self::bind_mount(&self.download_path, &self.mount_bind_download_path) {
+            0 => log::info!(
+                "[XunleiBackendServer] Mount {} to {} succeeded",
+                self.download_path.display(),
+                self.mount_bind_download_path.display()
+            ),
+            _ => anyhow::bail!(
+                "[XunleiBackendServer] Mount {} to {} failed",
+                self.download_path.display(),
+                self.mount_bind_download_path.display()
+            ),
+        }
+
+        log::info!("[XunleiBackendServer] Start Xunlei Backend Server");
+        let backend_process = std::process::Command::new(env::LAUNCHER_EXE)
+            .args([
+                format!("-launcher_listen={}", env::LAUNCHER_SOCK),
+                format!("-pid={}", env::PID_FILE),
+                format!("-logfile={}", env::LAUNCH_LOG_FILE),
+            ])
+            .current_dir(env::SYNOPKG_PKGDEST)
+            .envs(self.envs)
+            // Join the parent process group by default
+            .spawn()
+            .expect("failed to spawn child process");
+        let backend_pid = backend_process.id() as libc::pid_t;
+        log::info!(
+            "[XunleiBackendServer] Xunlei Backend Server PID: {}",
+            backend_pid
+        );
+
+        let mut signals = Signals::new([
+            signal_hook::consts::SIGINT,
+            signal_hook::consts::SIGHUP,
+            signal_hook::consts::SIGTERM,
+        ])?;
+
+        for signal in signals.forever() {
+            match signal {
+                signal_hook::consts::SIGINT
+                | signal_hook::consts::SIGHUP
+                | signal_hook::consts::SIGTERM => {
+                    unsafe { libc::kill(backend_pid, libc::SIGINT) };
+                    log::info!("[XunleiBackendServer] The backend service has been terminated");
+                    break;
+                }
+                _ => {
+                    log::warn!("[XunleiBackendServer] The system receives an unprocessed signal")
+                }
+            }
+        }
+
+        // umount bind directory
+        match Self::umount(&self.mount_bind_download_path) {
+            0 => log::info!(
+                "[XunleiBackendServer] Unmount {} succeeded",
+                self.mount_bind_download_path.display()
+            ),
+            _ => log::error!(
+                "[XunleiBackendServer] Unmount {} failed",
+                self.mount_bind_download_path.display()
+            ),
+        }
+
+        Ok(())
+    }
+}
+
+impl From<(PathBuf, PathBuf, HashMap<String, String>)> for XunleiBackendServer {
+    fn from(value: (PathBuf, PathBuf, HashMap<String, String>)) -> Self {
+        Self {
+            download_path: value.0,
+            mount_bind_download_path: value.1,
+            envs: value.2,
+        }
     }
 }
 
@@ -293,20 +379,20 @@ impl XunleiPanelServer {
                 Ok(rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#)).with_additional_header("Content-Type","application/json; charset=utf-8").with_status_code(200))
              },
             (GET) ["/"] => {
-                Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
+                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
             },
             (GET) ["/login"] => {
-                Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
+                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
             },
             (GET) ["/webman/"] => {
-                Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
+                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
             },
             (GET) ["/webman/3rdparty/pan-xunlei-com"] => {
-                Ok(rouille::Response::redirect_307(standard::SYNOPKG_WEB_UI_HOME))
+                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
              },
             _ => {
-                let mut cmd = std::process::Command::new(standard::SYNOPKG_CLI_WEB);
-                cmd.current_dir(standard::SYNOPKG_PKGDEST);
+                let mut cmd = std::process::Command::new(env::SYNOPKG_CLI_WEB);
+                cmd.current_dir(env::SYNOPKG_PKGDEST);
                 cmd.envs(&self.envs)
                 .env("SERVER_SOFTWARE", "rust")
                 .env("SERVER_PROTOCOL", "HTTP/1.1")

@@ -1,10 +1,11 @@
+pub mod env;
 #[cfg(feature = "launch")]
 pub mod launch;
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub mod libc_asset;
-pub mod standard;
 #[cfg(feature = "systemd")]
 pub mod systemd;
+pub mod util;
 #[cfg(feature = "systemd")]
 pub mod xunlei_asset;
 
@@ -60,11 +61,14 @@ pub struct Config {
     #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
     /// Xunlei config directory
-    #[clap(short, long, default_value = standard::DEFAULT_CONFIG_PATH)]
+    #[clap(short, long, default_value = env::DEFAULT_CONFIG_PATH)]
     config_path: PathBuf,
     /// Xunlei download directory
-    #[clap(short, long, default_value = standard::DEFAULT_DOWNLOAD_PATH)]
+    #[clap(short, long, default_value = env::DEFAULT_DOWNLOAD_PATH)]
     download_path: PathBuf,
+    /// Xunlei mount bind download directory
+    #[clap(short, long, default_value = env::DEFAULT_BIND_DOWNLOAD_PATH)]
+    mount_bind_download_path: PathBuf,
 }
 
 fn main() -> anyhow::Result<()> {
