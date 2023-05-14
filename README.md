@@ -79,7 +79,7 @@ Options:
 ### Ubuntu(Other Linux)
 GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
 ```shell
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-11/xunlei-embed-3.5.2-11.aarch64-unknown-linux-gnu.deb
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-12/xunlei-embed-3.5.2-12.aarch64-unknown-linux-gnu.deb
 
 dpkg -i xunlei_3.5.2-9_amd64.deb
 
@@ -95,11 +95,11 @@ xunlei launch
 GitHub [Releases](https://github.com/gngpp/nas-xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，可以下载后使用 opkg 安装，以 nanopi r4s 为例：
 
 ```shell
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-11/xunlei_3.5.2-11_aarch64_generic.ipk
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-11/luci-app-xunlei_1.0.1-5-1_all.ipk
-wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-11/luci-i18n-xunlei-zh-cn_1.0.1-5-1_all.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-12/xunlei_3.5.2-12_aarch64_generic.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-12/luci-app-xunlei_1.0.1-5-1_all.ipk
+wget https://github.com/gngpp/nas-xunlei/releases/download/v3.5.2-12/luci-i18n-xunlei-zh-cn_1.0.1-5-1_all.ipk
 
-opkg install xunlei_3.5.2-11_aarch64_generic.ipk
+opkg install xunlei_3.5.2-12_aarch64_generic.ipk
 opkg install luci-app-xunlei_1.0.1-5-1_all.ipk
 opkg install luci-i18n-xunlei-zh-cn_1.0.1-5-1_all.ipk
 ```
