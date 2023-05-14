@@ -12,7 +12,7 @@ struct Asset;
 
 #[cfg(target_os = "linux")]
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
-    use crate::standard;
+    use crate::{env, util};
     use anyhow::Context;
     use std::ffi::CString;
     use std::ops::Not;
@@ -28,7 +28,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     #[cfg(target_arch = "aarch64")]
     const LD: &str = "ld-linux-aarch64.so.1";
 
-    let syno_lib_path = std::path::Path::new(standard::SYNOPKG_LIB);
+    let syno_lib_path = std::path::Path::new(env::SYNOPKG_LIB);
     if !syno_lib_path.exists() {
         std::fs::create_dir(&syno_lib_path).context(format!(
             "[Asset] Failed to create directory: {}",
@@ -42,15 +42,15 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         let target_file = syno_lib_path.join(&filename);
         if !target_file.exists() {
             let file = Asset::get(&filename).context("[Asset] Failed to get bin asset")?;
-            standard::write_file(&target_file, file.data, 0o755)?;
+            util::write_file(&target_file, file.data, 0o755)?;
         }
     }
 
-    for sys_lib in standard::SYS_LIB_ARRAY {
+    for sys_lib in env::SYS_LIB_ARRAY {
         let sys_lib_path = Path::new(sys_lib);
         let sys_ld_path = sys_lib_path.join(LD);
         let output = std::process::Command::new("ldd")
-            .arg(standard::LAUNCHER_EXE)
+            .arg(env::LAUNCHER_EXE)
             .output()
             .expect("[Asset] Failed to execute ldd command");
         let stdout = String::from_utf8(output.stdout)?;
@@ -60,10 +60,10 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
         {
             true => {
                 if sys_lib_path.exists().not() {
-                    standard::create_dir_all(&sys_lib_path, 0o755)?
+                    util::create_dir_all(&sys_lib_path, 0o755)?
                 }
                 if sys_ld_path.exists().not() {
-                    let syno_ld_path = Path::new(standard::SYNOPKG_LIB).join(LD);
+                    let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
                     unsafe {
                         let source_path = CString::new(syno_ld_path.display().to_string())?;
                         let target_path = CString::new(sys_ld_path.display().to_string())?;
@@ -74,9 +74,9 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 }
                 envs.insert(
                     String::from("LD_LIBRARY_PATH"),
-                    standard::SYNOPKG_LIB.to_string(),
+                    env::SYNOPKG_LIB.to_string(),
                 );
-                log::info!("LD_LIBRARY_PATH={}", standard::SYNOPKG_LIB);
+                log::info!("LD_LIBRARY_PATH={}", env::SYNOPKG_LIB);
                 return Ok(());
             }
             false => {}

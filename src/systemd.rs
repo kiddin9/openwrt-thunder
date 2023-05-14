@@ -7,8 +7,9 @@ use std::path::PathBuf;
 use anyhow::Context;
 use rand::Rng;
 
-use crate::standard;
+use crate::env;
 
+use crate::util;
 use crate::xunlei_asset;
 use crate::xunlei_asset::Xunlei;
 
@@ -77,31 +78,29 @@ impl XunleiInstall {
         log::info!("[XunleiInstall] Installing in progress");
 
         // /var/packages/pan-xunlei-com/target
-        let target_dir = PathBuf::from(standard::SYNOPKG_PKGDEST);
+        let target_dir = PathBuf::from(env::SYNOPKG_PKGDEST);
         // /var/packages/pan-xunlei-com/target/host
-        let host_dir = PathBuf::from(standard::SYNOPKG_HOST);
+        let host_dir = PathBuf::from(env::SYNOPKG_HOST);
 
-        standard::create_dir_all(&target_dir, 0o755)?;
+        util::create_dir_all(&target_dir, 0o755)?;
 
         let xunlei = xunlei_asset::asset()?;
         for file in xunlei.iter()? {
             let filename = file.as_str();
             let target_filepath = target_dir.join(filename);
             let data = xunlei.get(filename).context("Read data failure")?;
-            standard::write_file(&target_filepath, data, 0o755)?;
+            util::write_file(&target_filepath, data, 0o755)?;
             log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
         }
 
-        standard::set_permissions(standard::SYNOPKG_PKGBASE, self.uid, self.gid).context(
-            format!(
-                "Failed to set permission: {}, PUID:{}, GUID:{}",
-                standard::SYNOPKG_PKGBASE,
-                self.uid,
-                self.gid
-            ),
-        )?;
+        util::set_permissions(env::SYNOPKG_PKGBASE, self.uid, self.gid).context(format!(
+            "Failed to set permission: {}, PUID:{}, GUID:{}",
+            env::SYNOPKG_PKGBASE,
+            self.uid,
+            self.gid
+        ))?;
 
-        standard::set_permissions(target_dir.to_str().unwrap(), self.uid, self.gid).context(
+        util::set_permissions(target_dir.to_str().unwrap(), self.uid, self.gid).context(
             format!(
                 "Failed to set permission: {}, PUID:{}, GUID:{}",
                 target_dir.display(),
@@ -111,12 +110,9 @@ impl XunleiInstall {
         )?;
 
         // path: /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-        let syno_info_path = PathBuf::from(format!(
-            "{}{}",
-            host_dir.display(),
-            standard::SYNO_INFO_PATH
-        ));
-        standard::create_dir_all(
+        let syno_info_path =
+            PathBuf::from(format!("{}{}", host_dir.display(), env::SYNO_INFO_PATH));
+        util::create_dir_all(
             syno_info_path.parent().context(format!(
                 "the path: {} parent not exists",
                 syno_info_path.display()
@@ -132,7 +128,7 @@ impl XunleiInstall {
             .chars()
             .take(7)
             .collect::<String>();
-        standard::write_file(
+        util::write_file(
             &syno_info_path,
             std::borrow::Cow::Borrowed(
                 format!("unique=\"synology_{}_720+\"", hex_string).as_bytes(),
@@ -144,16 +140,16 @@ impl XunleiInstall {
         let syno_authenticate_path = PathBuf::from(format!(
             "{}{}",
             host_dir.display(),
-            standard::SYNO_AUTHENTICATE_PATH
+            env::SYNO_AUTHENTICATE_PATH
         ));
-        standard::create_dir_all(
+        util::create_dir_all(
             syno_authenticate_path.parent().context(format!(
                 "directory path: {} not exists",
                 syno_authenticate_path.display()
             ))?,
             0o755,
         )?;
-        standard::write_file(
+        util::write_file(
             &syno_authenticate_path,
             std::borrow::Cow::Borrowed(String::from("#!/usr/bin/env sh\necho OK").as_bytes()),
             0o755,
@@ -161,27 +157,27 @@ impl XunleiInstall {
 
         // symlink
         unsafe {
-            if Path::new(standard::SYNO_INFO_PATH).exists().not() {
+            if Path::new(env::SYNO_INFO_PATH).exists().not() {
                 let source_sys_info_path =
                     std::ffi::CString::new(syno_info_path.display().to_string())?;
-                let target_sys_info_path = std::ffi::CString::new(standard::SYNO_INFO_PATH)?;
+                let target_sys_info_path = std::ffi::CString::new(env::SYNO_INFO_PATH)?;
                 if libc::symlink(source_sys_info_path.as_ptr(), target_sys_info_path.as_ptr()) != 0
                 {
                     anyhow::bail!(std::io::Error::last_os_error());
                 }
             }
 
-            let link_syno_authenticate_path = Path::new(standard::SYNO_AUTHENTICATE_PATH);
+            let link_syno_authenticate_path = Path::new(env::SYNO_AUTHENTICATE_PATH);
             if link_syno_authenticate_path.exists().not() {
                 let source_syno_authenticate_path =
                     std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
                 let target_syno_authenticate_path =
-                    std::ffi::CString::new(standard::SYNO_AUTHENTICATE_PATH)?;
+                    std::ffi::CString::new(env::SYNO_AUTHENTICATE_PATH)?;
                 let patent_ = link_syno_authenticate_path.parent().context(format!(
                     "directory path: {} not exists",
                     link_syno_authenticate_path.display()
                 ))?;
-                standard::create_dir_all(patent_, 0o755)?;
+                util::create_dir_all(patent_, 0o755)?;
                 if libc::symlink(
                     source_syno_authenticate_path.as_ptr(),
                     target_syno_authenticate_path.as_ptr(),
@@ -235,15 +231,15 @@ impl XunleiInstall {
             self.uid
         );
 
-        standard::write_file(
-            &PathBuf::from(standard::SYSTEMCTL_UNIT_FILE),
+        util::write_file(
+            &PathBuf::from(env::SYSTEMCTL_UNIT_FILE),
             std::borrow::Cow::Borrowed(systemctl_unit.as_bytes()),
             0o666,
         )?;
 
         Systemd::systemctl(["daemon-reload"])?;
-        Systemd::systemctl(["enable", standard::APP_NAME])?;
-        Systemd::systemctl(["start", standard::APP_NAME])?;
+        Systemd::systemctl(["enable", env::APP_NAME])?;
+        Systemd::systemctl(["start", env::APP_NAME])?;
         Ok(())
     }
 }
@@ -262,13 +258,13 @@ pub struct XunleiUninstall {
 impl XunleiUninstall {
     fn uninstall(&self) -> anyhow::Result<()> {
         if Systemd::support() {
-            let path = Path::new(standard::SYSTEMCTL_UNIT_FILE);
+            let path = Path::new(env::SYSTEMCTL_UNIT_FILE);
             if path.exists() {
                 std::fs::remove_file(path)?;
                 log::info!("[XunleiUninstall] Uninstall xunlei service");
             }
         }
-        let path = Path::new(standard::SYNOPKG_PKGBASE);
+        let path = Path::new(env::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
             log::info!("[XunleiUninstall] Uninstall xunlei package");
@@ -276,7 +272,7 @@ impl XunleiUninstall {
 
         // Clear xunlei default config directory
         if self.clear {
-            let path = Path::new(standard::DEFAULT_CONFIG_PATH);
+            let path = Path::new(env::DEFAULT_CONFIG_PATH);
             if path.exists() {
                 std::fs::remove_dir_all(Path::new(path))?
             }
@@ -289,8 +285,8 @@ impl XunleiUninstall {
 impl Running for XunleiUninstall {
     fn run(self) -> anyhow::Result<()> {
         if Systemd::support() {
-            Systemd::systemctl(["disable", standard::APP_NAME])?;
-            Systemd::systemctl(["stop", standard::APP_NAME])?;
+            Systemd::systemctl(["disable", env::APP_NAME])?;
+            Systemd::systemctl(["stop", env::APP_NAME])?;
             Systemd::systemctl(["daemon-reload"])?;
         }
         self.uninstall()?;

@@ -55,7 +55,7 @@ impl XunleiLocalAsset {
     fn new() -> anyhow::Result<Self> {
         let xunlei = XunleiLocalAsset {
             tmp_path: PathBuf::from("/tmp/xunlei_bin"),
-            filename: format!("nasxunlei-DSM7-{}.spk", crate::standard::SUPPORT_ARCH),
+            filename: format!("nasxunlei-DSM7-{}.spk", crate::env::SUPPORT_ARCH),
         };
         let status = xunlei.exestrct_package()?;
         if status.success().not() {
@@ -75,7 +75,7 @@ impl XunleiLocalAsset {
             .progress_chars("#>-"));
 
         if self.tmp_path.exists().not() {
-            crate::standard::create_dir_all(&self.tmp_path, 0o755)?;
+            crate::util::create_dir_all(&self.tmp_path, 0o755)?;
         }
 
         let mut downloaded = 0;
