@@ -28,10 +28,10 @@ o.password = true
 o = s:option(Value, "config_path", translate("Data Storage Path"), translate("Note: Please keep your user data safe"))
 o.default = "/opt/xunlei"
 
-o = s:option(Value, "download_path", translate("Download Storage Path"), translate("Download storage path, after starting will be mounted to the thunder download bindings directory"))
+o = s:option(Value, "download_path", translate("Download Storage Path"), translate("Download the storage path, which will be mounted on the binding path after startup"))
 o.default = "/opt/xunlei/downloads"
 
-o = s:option(Value, "mount_bind_download_path", translate("Mount Bind Download Path"), translate("The download bindings directory will be mapped to the download storage path after startup, no special changes are required"))
+o = s:option(Value, "mount_bind_download_path", translate("Mount Bind Download Path"), translate("Mount the binding path, which will be mapped to the download storage path after startup, no special default can be"))
 o.default = "/xunlei"
 
 return m
