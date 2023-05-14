@@ -43,17 +43,17 @@ msgstr "日志"
 msgid "Data Storage Path"
 msgstr "数据储存路径"
 
-msgid "Default Download Path"
-msgstr "默认下载路径"
+msgid "Download Storage Path"
+msgstr "下载存储路径"
 
-msgid "Default Mount Bind Download Path"
-msgstr "默认绑定挂载路径"
+msgid "Mount Bind Download Path"
+msgstr "绑定挂载路径"
 
-msgid "Note: Please change the binding download directory you determine at the first startup. It will bind to the real storage path after startup, otherwise it will not be able to change the binding directory after startup"
-msgstr "注意: 初次启动请更改你确定的绑定下载目录，启动后将绑定到真实的存储路径，否则启动后将无法更改此绑定目录"
+msgid "The download bindings directory will be mapped to the download storage path after startup, no special changes are required"
+msgstr "下载绑定目录，启动后将映射到下载存储路径，无特殊无需更改"
 
-msgid "Note: the default storage path, after boot will mount to the bound directory"
-msgstr "注意: 默认存储路径，启动后将挂载到绑定的目录"
+msgid "Download storage path, after starting will be mounted to the thunder download bindings directory"
+msgstr "下载存储路径，启动后将挂载到下载绑定目录"
 
 msgid "Note: Please keep your user data safe"
 msgstr "注意: 请保管好你的用户数据"
