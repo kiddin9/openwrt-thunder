@@ -19,11 +19,11 @@ for target in ${target_list[@]}; do
   mv xunlei-$tag-$target.tar.gz.sha256 $root/uploads/
   cd -
   cd target/$target/debian
-  rename 's/.*/xunlei-'$tag'.'$target'.deb/' *.deb
+  rename 's/.*/xunlei-'$tag'-'$target'.deb/' *.deb
   mv ./* $root/uploads/
   cd -
   cd target/$target/generate-rpm
-  rename 's/.*/xunlei-'$tag'.'$target'.rpm/' xunlei*.rpm
+  rename 's/.*/xunlei-'$tag'-'$target'.rpm/' xunlei*.rpm
   mv ./* $root/uploads/
   cd -
 
@@ -44,11 +44,11 @@ for target in ${target_list[@]}; do
   mv xunlei-embed-$tag-$target.tar.gz.sha256 $root/uploads/
   cd -
   cd target/$target/debian
-  rename 's/.*/xunlei-embed-'$tag'.'$target'.deb/' *.deb
+  rename 's/.*/xunlei-embed-'$tag'-'$target'.deb/' *.deb
   mv ./* $root/uploads/
   cd -
   cd target/$target/generate-rpm
-  rename 's/.*/xunlei-embed-'$tag'.'$target'.rpm/' xunlei*.rpm
+  rename 's/.*/xunlei-embed-'$tag'-'$target'.rpm/' xunlei*.rpm
   mv ./* $root/uploads/
   cd -
 
