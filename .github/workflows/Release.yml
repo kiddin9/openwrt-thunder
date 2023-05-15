@@ -154,7 +154,7 @@ jobs:
     name: Docker Image
     runs-on: ubuntu-22.04
     needs: [ openwrt ]
-    environment: OpenWrt
+    environment: Docker
     strategy:
       fail-fast: false
       matrix:
@@ -164,8 +164,7 @@ jobs:
           - arch: "x86_64"
             ali_arch: "amd64"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
   
       - name: Get tag
         if: startsWith(github.ref, 'refs/tags/')
