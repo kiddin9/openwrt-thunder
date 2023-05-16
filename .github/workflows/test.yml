@@ -37,14 +37,8 @@ jobs:
           password: ${{ secrets.TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: ./docker
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            gngpp/xunlei:${{ env.tag }}
-            ghcr.io/gngpp/xunlei:${{ env.tag }}
+        run: |
+          tag=$tag bash +x docker_build.sh
 
       - name: Docker Hub Description
         if: ${{ matrix.target.arch == 'x86_64' }}
