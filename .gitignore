@@ -2,4 +2,6 @@ target
 xunlei
 .idea
 uploads
+data
+downloads
 Cargo.lock

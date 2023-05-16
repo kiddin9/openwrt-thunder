@@ -7,7 +7,7 @@ PKG_VERSION:=3.5.2-12
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
-PKG_SOURCE:=xunlei-openwrt-$(PKG_VERSION)-$(ARCH).tar.gz
+PKG_SOURCE:=xunlei-launch-$(PKG_VERSION)-$(ARCH)-unknown-linux-musl.tar.gz
 PKG_SOURCE_URL:=https://github.com/gngpp/nas-xunlei/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=skip
 STRIP:=false
@@ -42,7 +42,7 @@ define Build/Prepare
 	rm $(PKG_SOURCE).sha256 $(PKG_SOURCE)
 
 	tar -xvf $(DL_DIR)/$(PKG_SOURCE)
-	mv xunlei-openwrt-$(PKG_VERSION)-$(ARCH)/* $(PKG_BUILD_DIR)/
+	mv xunlei-launch-$(PKG_VERSION)-$(ARCH)-unknown-linux-musl/* $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
