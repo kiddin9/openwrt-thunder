@@ -93,7 +93,7 @@ xunlei uninstall
 xunlei launch
 ```
 
-## Docker 运行
+### Docker 运行
 
 ```bash
 docker run --rm -it --privileged -p 5055:5055 --hostname=xunlei \
