@@ -76,7 +76,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                     String::from("LD_LIBRARY_PATH"),
                     env::SYNOPKG_LIB.to_string(),
                 );
-                log::info!("LD_LIBRARY_PATH={}", env::SYNOPKG_LIB);
+                log::info!("[Asset] LD_LIBRARY_PATH={}", env::SYNOPKG_LIB);
                 return Ok(());
             }
             false => {}
