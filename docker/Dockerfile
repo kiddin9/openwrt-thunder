@@ -21,22 +21,21 @@ WORKDIR /rootfs
 ENV LANG=C.UTF-8 DEBIAN_FRONTEND=noninteractive LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=C
 
 RUN apk update && apk add bash
-RUN mkdir /rootfs/bin /rootfs/run \
+RUN mkdir -p /rootfs/bin /rootfs/run \
     /rootfs/lib /rootfs/proc \
     /rootfs/usr /rootfs/mnt \
     /rootfs/etc /rootfs/sbin \
     /rootfs/sys /rootfs/dev \
     /rootfs/var /rootfs/tmp \
     /rootfs/root /rootfs/boot \
-    /opt/xunlei /opt/xunlei/downloads && \
-    mkdir -p /rootfs/opt/xunlei  \
-    mkdir -p /rootfs/opt/xunlei/downloads
+    /rootfs/opt/data /rootfs/downloads \
+    /opt/data /downloads
 
-COPY run_script.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/run_script.sh
+COPY run.sh /bin/run.sh
+RUN chmod +x /bin/run.sh
 
 COPY --from=builder /var/packages/pan-xunlei-com/target /var/packages/pan-xunlei-com/target
-COPY --from=builder /xunlei /usr/bin/xunlei
+COPY --from=builder /xunlei /bin/xunlei
 
-VOLUME [ "/opt/xunlei", "/opt/xunlei/downloads" ]
-ENTRYPOINT ["/usr/local/bin/run_script.sh"]
+VOLUME [ "/opt/data", "/downloads" ]
+ENTRYPOINT ["/bin/run.sh"]

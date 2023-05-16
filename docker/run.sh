@@ -20,9 +20,9 @@ mount --bind /var /rootfs/var
 mount --bind /tmp /rootfs/tmp
 mount --bind /root /rootfs/root
 mount --bind /proc /rootfs/proc
-mount --bind /opt/xunlei /rootfs/opt/xunlei
-mount --bind /opt/xunlei/downloads /rootfs/opt/xunlei/downloads
+mount --bind /opt/data /rootfs/opt/data
+mount --bind /downloads /rootfs/downloads
 
-chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /bin/mount -t proc none /proc && /usr/bin/xunlei launch"
+chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /bin/mount -t proc none /proc && /bin/xunlei launch -c /opt/data -d /downloads"
 
 exec "$@"
