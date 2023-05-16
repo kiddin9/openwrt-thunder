@@ -190,6 +190,7 @@ jobs:
           password: ${{ secrets.TOKEN }}
 
       - name: Build
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           cd docker
           docker build -t ghcr.io/gngpp/xunlei:$tag --platform linux/${{ matrix.target.ali_arch }} --build-arg ARCH=${{ matrix.target.arch }} --build-arg VERSION=$tag .
