@@ -151,10 +151,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup QEMU
-        uses: dbhi/qus/action@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
         
-      - name: Setup Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Get tag
@@ -163,15 +163,6 @@ jobs:
         uses: dawidd6/action-get-tag@v1
         with:
           strip_v: true
-
-      - name: Tag Check
-        run: |
-          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_ENV
-          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
-          if [ -z "${{ steps.tag.outputs.tag }}" ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-            echo "tag=latest" >> $GITHUB_ENV
-          fi
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -187,17 +178,10 @@ jobs:
           password: ${{ secrets.TOKEN }}
             
       - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: ./docker
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            gngpp/xunlei:${{ env.tag }}
-            ghcr.io/gngpp/xunlei:${{ env.tag }}
+        run: |
+          tag=${{ steps.tag.outputs.tag }} bash +x docker_build.sh
 
       - name: Docker Hub Description
-        if: ${{ matrix.target.arch == 'x86_64' }}
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
