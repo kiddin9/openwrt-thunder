@@ -5,7 +5,7 @@ ARG ARCH
 
 RUN apt update && apt install wget -y
 RUN mkdir -p /var/packages/pan-xunlei-com/target
-RUN wget https://github.com/gngpp/nas-xunlei/releases/download/v${VERSION}/xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu.tar.gz
+RUN wget https://github.com/gngpp/xunlei/releases/download/v${VERSION}/xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu.tar.gz
 RUN tar -xvf xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu.tar.gz && chmod 755 /var/packages/pan-xunlei-com/target
 RUN mv xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu/bin/* /var/packages/pan-xunlei-com/target/
 RUN mv xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu/xunlei .
@@ -15,7 +15,7 @@ RUN chmod 755 /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/m
 RUN chmod 755 /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
 
 FROM ubuntu:latest
-LABEL org.opencontainers.image.source https://github.com/gngpp/nas-xunlei
+LABEL org.opencontainers.image.source https://github.com/gngpp/xunlei
 WORKDIR /rootfs
 
 ENV LANG=C.UTF-8 DEBIAN_FRONTEND=noninteractive LANG=zh_CN.UTF-8 LANGUAGE=zh_CN.UTF-8 LC_ALL=C

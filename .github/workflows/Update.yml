@@ -1,4 +1,4 @@
-name: Update nas-xunlei version
+name: Update xunlei version
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   update:
-    name: Update nas-xunlei version
+    name: Update xunlei version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -29,10 +29,10 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
       with:
-        branch: update-nas-xunlei-version
+        branch: update-xunlei-version
         delete-branch: true
         add-paths: |
           Cargo.toml
           openwrt/xunlei/Makefile
-        title: 'Update nas-xunlei to v${{ steps.update.outputs.new_version }}'
-        commit-message: 'Update nas-xunlei to v${{ steps.update.outputs.new_version }}'
+        title: 'Update xunlei to v${{ steps.update.outputs.new_version }}'
+        commit-message: 'Update xunlei to v${{ steps.update.outputs.new_version }}'

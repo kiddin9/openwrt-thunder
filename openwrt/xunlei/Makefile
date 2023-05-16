@@ -8,7 +8,7 @@ PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 PKG_SOURCE:=xunlei-launch-$(PKG_VERSION)-$(ARCH)-unknown-linux-musl.tar.gz
-PKG_SOURCE_URL:=https://github.com/gngpp/nas-xunlei/releases/download/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://github.com/gngpp/xunlei/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=skip
 STRIP:=false
 
@@ -18,7 +18,7 @@ define Package/$(PKG_NAME)
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  TITLE:=nas-xunlei
+  TITLE:=xunlei
   DEPENDS:=@(aarch64||x86_64)
   URL:=https://nas.xunlei.com/
 endef

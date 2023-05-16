@@ -4,8 +4,8 @@ version = "3.5.2-13"
 edition = "2021"
 description = "Synology Nas Thunder runs on Linux"
 license = "MIT"
-homepage = "https://github.com/messense/nas-xunlei"
-repository = "https://github.com/messense/nas-xunlei.git"
+homepage = "https://github.com/gngpp/xunlei"
+repository = "https://github.com/gngpp/xunlei.git"
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
