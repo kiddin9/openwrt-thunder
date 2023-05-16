@@ -41,13 +41,13 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./docker
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.target.ali_arch }}
           build-args: |
             ARCH=${{ matrix.target.arch }}
-            VERSION=${{ steps.tag.outputs.tag }}
+            VERSION=${{ env.tag }}
           tags: |
-            gngpp/xunlei:${{ steps.tag.outputs.tag }}
-            ghcr.io/gngpp/xunlei:${{ steps.tag.outputs.tag }}
+            gngpp/xunlei:${{ env.tag }}
+            ghcr.io/gngpp/xunlei:${{ env.tag }}
 
       - name: Docker Hub Description
         if: ${{ matrix.target.arch == 'x86_64' }}
