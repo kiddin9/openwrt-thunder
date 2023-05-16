@@ -194,7 +194,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.TOKEN }}
             
-      - name: Docker build
+      - name: Docker build and push
         uses: docker/build-push-action@v3
         with:
           context: ./docker
