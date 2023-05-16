@@ -49,10 +49,10 @@ pub enum Commands {
 #[derive(Args)]
 pub struct Config {
     /// Xunlei authentication username
-    #[arg(short = 'U', long)]
+    #[arg(short = 'U', long, env = "XUNLEI_AUTH_USER")]
     auth_user: Option<String>,
     /// Xunlei authentication password
-    #[arg(short = 'W', long)]
+    #[arg(short = 'W', long, env = "XUNLEI_AUTH_PASSWORD")]
     auth_password: Option<String>,
     /// Xunlei Listen host
     #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
