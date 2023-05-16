@@ -11,9 +11,6 @@ ln -s /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/a
 mount --bind /bin /rootfs/bin
 mount --bind /run /rootfs/run
 mount --bind /lib /rootfs/lib
-mount --bind /lib64 /rootfs/lib64
-mount --bind /lib32 /rootfs/lib32
-mount --bind /libx32 /rootfs/libx32
 mount --bind /usr /rootfs/usr
 mount --bind /mnt /rootfs/mnt
 mount --bind /etc /rootfs/etc
@@ -22,11 +19,10 @@ mount --bind /dev /rootfs/dev
 mount --bind /var /rootfs/var
 mount --bind /tmp /rootfs/tmp
 mount --bind /root /rootfs/root
-mount --bind /boot /rootfs/boot
 mount --bind /proc /rootfs/proc
 mount --bind /opt/xunlei /rootfs/opt/xunlei
 mount --bind /opt/xunlei/downloads /rootfs/opt/xunlei/downloads
 
-chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /usr/bin/mount -t proc none /proc && /usr/bin/xunlei launch"
+chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /bin/mount -t proc none /proc && /usr/bin/xunlei launch"
 
 exec "$@"
