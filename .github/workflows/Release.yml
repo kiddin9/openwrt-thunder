@@ -45,13 +45,6 @@ jobs:
         shell: bash
         run: |
           bash +x build.sh
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: uploads
-          path: uploads/
-          if-no-files-found: error
           
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1

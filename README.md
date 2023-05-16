@@ -10,7 +10,7 @@
   </a>
   [![Docker Image](https://img.shields.io/docker/pulls/gngpp/xunlei.svg?maxAge=2592000)](https://hub.docker.com/r/gngpp/xunlei/)
 
-xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpine）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
+xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpine/Docker）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
 
 - 只支持**X86_64/aarch64**
 - 支持**glibc/musl**
