@@ -194,6 +194,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.TOKEN }}
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
@@ -215,6 +216,9 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            ARCH=${{ matrix.target.arch }}
+            VERSION=${{ steps.tag.outputs.tag }}
           push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -223,7 +227,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           cd docker
-          docker build -t ghcr.io/gngpp/xunlei:$tag --platform linux/${{ matrix.target.ali_arch }} --build-arg ARCH=${{ matrix.target.arch }} --build-arg VERSION=$tag .
+          docker build -t ghcr.io/gngpp/xunlei:$tag --platform linux/${{ matrix.target.ali_arch }} --build-arg  --build-arg  .
           docker images
 
       - name: Push
