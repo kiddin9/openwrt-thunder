@@ -8,6 +8,7 @@
   </a><a href="hhttps://github.com/gngpp/xunlei/releases">
     <img src="https://img.shields.io/github/downloads/gngpp/xunlei/total?style=flat&?">
   </a>
+  [![Docker Image](https://img.shields.io/docker/pulls/gngpp/xunlei.svg?maxAge=2592000)](https://hub.docker.com/r/gngpp/xunlei/)
 
 xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpine）的迅雷远程下载程序。仅供测试，测试完请大家自觉删除。
 
@@ -90,6 +91,17 @@ xunlei install
 xunlei uninstall
 # 如果你的系统不支持systemd，则手动启动
 xunlei launch
+```
+
+## Docker 运行
+
+```bash
+docker run --rm -it --privileged -p 5055:5055 \
+  -v $(pwd)/data:/opt/xunlei \
+  -v $(pwd)/downloads:/opt/xunlei/downloads \
+  -e XUNLEI_AUTH_USER=admin \
+  -e XUNLEI_AUTH_PASSWORD=admin \
+  gngpp/xunlei:3.5.2-13
 ```
 
 ### OpenWrt 路由器
