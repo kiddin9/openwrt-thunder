@@ -96,12 +96,12 @@ xunlei launch
 ## Docker 运行
 
 ```bash
-docker run --rm -it --privileged -p 5055:5055 \
-  -v $(pwd)/data:/opt/xunlei \
-  -v $(pwd)/downloads:/opt/xunlei/downloads \
+docker run --rm -it --privileged -p 5055:5055 --hostname=xunlei \
+  -v $(pwd)/data:/opt/data \
+  -v $(pwd)/downloads:/downloads \
   -e XUNLEI_AUTH_USER=admin \
   -e XUNLEI_AUTH_PASSWORD=admin \
-  gngpp/xunlei:3.5.2-13
+  ghcr.io/gngpp/xunlei:3.5.2-13
 ```
 
 ### OpenWrt 路由器
