@@ -9,6 +9,10 @@ RUN wget https://github.com/gngpp/nas-xunlei/releases/download/v${VERSION}/xunle
 RUN tar -xvf xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu.tar.gz && chmod 755 /var/packages/pan-xunlei-com/target
 RUN mv xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu/bin/* /var/packages/pan-xunlei-com/target/
 RUN mv xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu/xunlei .
+COPY authenticate.cgi /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
+COPY synoinfo.conf /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
+RUN chmod 755 /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
+RUN chmod 755 /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
 
 FROM ubuntu:latest
 LABEL org.opencontainers.image.source https://github.com/gngpp/nas-xunlei
