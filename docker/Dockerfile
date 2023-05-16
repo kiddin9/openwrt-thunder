@@ -1,5 +1,8 @@
 FROM ubuntu:latest as builder
 
+ARG VERSION
+ARG ARCH
+
 RUN apt update && apt install wget -y
 RUN mkdir -p /var/packages/pan-xunlei-com/target
 RUN wget https://github.com/gngpp/nas-xunlei/releases/download/v${VERSION}/xunlei-launch-${VERSION}-${ARCH}-unknown-linux-gnu.tar.gz

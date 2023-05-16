@@ -191,11 +191,11 @@ jobs:
 
       - name: Build
         run: |
-          export CR_PAT=${{ secrets.TOKEN }}
-          echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
           cd docker
-          docker build -t ghcr.io/gngpp/xunlei:$tag --platform linux/${{ matrix.target.ali_arch }} --build-arg ARCH=${{ matrix.target.arch }},VERSION=$tag .
+          docker build -t ghcr.io/gngpp/xunlei:$tag --platform linux/${{ matrix.target.ali_arch }} --build-arg ARCH=${{ matrix.target.arch }} --build-arg VERSION=$tag .
+          docker images
 
       - name: Push
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           docker push ghcr.io/gngpp/xunlei:$tag
