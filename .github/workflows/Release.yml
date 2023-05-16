@@ -207,7 +207,7 @@ jobs:
       - name: Docker build
         uses: docker/build-push-action@v3
         with:
-          context: ./Docker
+          context: ./docker
           platforms: linux/amd64,linux/arm64
           build-args: |
             ARCH=${{ matrix.target.arch }}
