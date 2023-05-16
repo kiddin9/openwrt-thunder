@@ -158,7 +158,13 @@ jobs:
             ali_arch: "amd64"
     steps:
       - uses: actions/checkout@v3
-  
+
+      - name: Setup QEMU
+        uses: dbhi/qus/action@main
+        
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Get tag
         if: startsWith(github.ref, 'refs/tags/')
         id: tag
