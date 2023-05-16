@@ -28,8 +28,8 @@ RUN mkdir /rootfs/bin /rootfs/run \
     /rootfs/sys /rootfs/dev \
     /rootfs/var /rootfs/tmp \
     /rootfs/root /rootfs/boot \
-    /opt/xunlei/downloads /opt/xunlei && \
-    mkdir -p /rootfs/opt/xunlei && \
+    /opt/xunlei /opt/xunlei/downloads && \
+    mkdir -p /rootfs/opt/xunlei  \
     mkdir -p /rootfs/opt/xunlei/downloads
 
 COPY run_script.sh /usr/local/bin/
