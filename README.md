@@ -101,7 +101,7 @@ docker run --rm -it --privileged -p 5055:5055 --hostname=xunlei \
   -v $(pwd)/downloads:/downloads \
   -e XUNLEI_AUTH_USER=admin \
   -e XUNLEI_AUTH_PASSWORD=admin \
-  ghcr.io/gngpp/xunlei:3.5.2-13
+  gngpp/xunlei:3.5.2-13
 ```
 
 ### OpenWrt 路由器
