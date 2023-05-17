@@ -178,6 +178,7 @@ jobs:
           password: ${{ secrets.TOKEN }}
             
       - name: Build and push
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           tag=${{ steps.tag.outputs.tag }} bash +x docker_build.sh
 
