@@ -30,5 +30,6 @@ jobs:
         add-paths: |
           Cargo.toml
           openwrt/xunlei/Makefile
+          README.md
         title: 'Update xunlei to v${{ steps.update.outputs.new_version }}'
         commit-message: 'Update xunlei to v${{ steps.update.outputs.new_version }}'
