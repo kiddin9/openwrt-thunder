@@ -18,7 +18,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
-        sources check_update.sh
+        source check_update.sh
         echo "new_version=$new_version" >> $GITHUB_ENV
         echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
