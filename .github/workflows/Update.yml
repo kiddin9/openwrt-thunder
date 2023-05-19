@@ -10,6 +10,8 @@ jobs:
   update:
     name: Update xunlei version
     runs-on: ubuntu-latest
+    container:
+      image: docker://ghcr.io/gngpp/linux:ubuntu22.04
     steps:
     - uses: actions/checkout@v3
 
