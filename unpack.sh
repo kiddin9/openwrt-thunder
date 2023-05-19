@@ -22,7 +22,11 @@ filename="nasxunlei-DSM7-${arch}.spk"
 
 cd $download_dir
 if [ ! -f "$filename" ];then
-    wget https://github.com/gngpp/xunlei/releases/download/spk/$filename
+    if [ "$arch" == "x86_64" ]; then
+        wget  https://down.sandai.net/nas/$filename
+    else
+        wget https://github.com/gngpp/xunlei/releases/download/spk/$filename
+    fi
 fi
 cp $download_dir/$filename $dir/$filename
 cd -
