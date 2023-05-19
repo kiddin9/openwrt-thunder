@@ -8,3 +8,4 @@ echo "new_version=$new_version"
 
 sed -i 's/'$current_version'/'$new_version'/g' Cargo.toml
 sed -i 's/'$current_version'/'$new_version'/g' openwrt/xunlei/Makefile
+sed -i 's/'$current_version'/'$new_version'/g' README.md
