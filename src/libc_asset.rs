@@ -64,15 +64,15 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 }
                 // Compatible MUSL systems may come with libc
                 if sys_ld_path.exists() {
-                    let real_path = fs::canonicalize(&sys_ld_path)?;
-                    let real_lib_path = real_path.parent().context(format!(
+                    let real_ld_path = std::fs::canonicalize(&sys_ld_path)?;
+                    let real_lib_path = real_ld_path.parent().context(format!(
                         "[Asset] The library path does not exist: {}",
-                        real_path.display()
+                        real_ld_path.display()
                     ))?;
                     log::info!(
                         "[Asset] Real path of the symlink {}: {}",
                         sys_ld_path.display(),
-                        real_path.display()
+                        real_ld_path.display()
                     );
                     envs.insert(
                         String::from("LD_LIBRARY_PATH"),
