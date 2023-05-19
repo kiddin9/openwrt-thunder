@@ -10,10 +10,12 @@ jobs:
   update:
     name: Update xunlei version
     runs-on: ubuntu-latest
-    container:
-      image: docker://ghcr.io/gngpp/linux:ubuntu22.04
     steps:
     - uses: actions/checkout@v3
+
+    - name: Get Latest Tag
+      id: previoustag
+      uses: WyriHaximus/github-action-get-previous-tag@v1
 
     - name: Update
       id: update
@@ -21,7 +23,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
         bash +x unpack.sh x86_64
-        current_version=$(git describe --tags --abbrev=0 | sed 's/^v//' | sed 's/-.*//')
+        current_version=${{ steps.previoustag.outputs.tag }}
         new_version=$(cat bin/version)
         sed -i 's/$current_version/$new_version/g' Cargo.toml
         sed -i 's/$current_version/$new_version/g' openwrt/xunlei/Makefile
