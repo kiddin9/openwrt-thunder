@@ -62,14 +62,34 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 if sys_lib_path.exists().not() {
                     util::create_dir_all(&sys_lib_path, 0o755)?
                 }
-                if sys_ld_path.exists().not() {
-                    let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
-                    unsafe {
-                        let source_path = CString::new(syno_ld_path.display().to_string())?;
-                        let target_path = CString::new(sys_ld_path.display().to_string())?;
-                        if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
-                            anyhow::bail!(std::io::Error::last_os_error());
-                        }
+                // Compatible MUSL systems may come with libc
+                if sys_ld_path.exists() {
+                    let real_path = fs::canonicalize(&sys_ld_path)?;
+                    let real_lib_path = real_path.parent().context(format!(
+                        "[Asset] The library path does not exist: {}",
+                        real_path.display()
+                    ))?;
+                    log::info!(
+                        "[Asset] Real path of the symlink {}: {}",
+                        sys_ld_path.display(),
+                        real_path.display()
+                    );
+                    envs.insert(
+                        String::from("LD_LIBRARY_PATH"),
+                        format!("{}", real_lib_path.display()),
+                    );
+                    log::info!(
+                        "[Asset] LD_LIBRARY_PATH={}",
+                        format!("{}", real_lib_path.display())
+                    );
+                    return Ok(());
+                }
+                let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
+                unsafe {
+                    let source_path = CString::new(syno_ld_path.display().to_string())?;
+                    let target_path = CString::new(sys_ld_path.display().to_string())?;
+                    if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
+                        anyhow::bail!(std::io::Error::last_os_error());
                     }
                 }
                 envs.insert(
