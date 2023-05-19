@@ -13,26 +13,19 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Update
-      id: update
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+    - name: Update version
       run: |
-        bash +x unpack.sh x86_64
-        current_version=$(cat Cargo.toml | grep version | head -1 | awk -F= '{gsub(/"/,""); print $2}')
-        new_version=$(cat bin/version)
-        sed -i 's/$current_version/$new_version/g' Cargo.toml
-        sed -i 's/$current_version/$new_version/g' openwrt/xunlei/Makefile
-        echo "new_version=$new_version" >> $GITHUB_ENV
-        echo "new_version=$new_version" >> $GITHUB_OUTPUT
+        bash +x check_update.sh
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
       with:
+        token: ${{ secrets.TOKEN }}
         branch: update-xunlei-version
         delete-branch: true
         add-paths: |
           Cargo.toml
+          Cargo.lock
           openwrt/xunlei/Makefile
         title: 'Update xunlei to v${{ steps.update.outputs.new_version }}'
         commit-message: 'Update xunlei to v${{ steps.update.outputs.new_version }}'
