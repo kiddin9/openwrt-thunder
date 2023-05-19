@@ -13,17 +13,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Get Latest Tag
-      id: previoustag
-      uses: WyriHaximus/github-action-get-previous-tag@v1
-
     - name: Update
       id: update
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
         bash +x unpack.sh x86_64
-        current_version=${{ steps.previoustag.outputs.tag }}
+        current_version=$(cat Cargo.toml | grep version | head -1 | awk -F= '{gsub(/"/,""); print $2}')
         new_version=$(cat bin/version)
         sed -i 's/$current_version/$new_version/g' Cargo.toml
         sed -i 's/$current_version/$new_version/g' openwrt/xunlei/Makefile
