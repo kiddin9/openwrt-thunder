@@ -15,8 +15,6 @@ jobs:
 
     - name: Update
       id: update
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
       run: |
         source check_update.sh
         echo "new_version=$new_version" >> $GITHUB_ENV
@@ -25,6 +23,7 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v4
       with:
+        token: ${{ secrets.TOKEN }}
         branch: update-xunlei-version
         delete-branch: true
         add-paths: |
