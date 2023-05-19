@@ -378,19 +378,10 @@ impl XunleiPanelServer {
             (GET) ["/webman/login.cgi"] => {
                 Ok(rouille::Response::json(&String::from(r#"{"SynoToken", ""}"#)).with_additional_header("Content-Type","application/json; charset=utf-8").with_status_code(200))
              },
-            (GET) ["/"] => {
-                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
-            },
-            (GET) ["/login"] => {
-                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
-            },
-            (GET) ["/webman/"] => {
-                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
-            },
-            (GET) ["/webman/3rdparty/pan-xunlei-com"] => {
-                Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
-             },
             _ => {
+                if request.raw_url().contains(env::SYNOPKG_WEB_UI_HOME).not() {
+                    return Ok(rouille::Response::redirect_307(env::SYNOPKG_WEB_UI_HOME))
+                }
                 let mut cmd = std::process::Command::new(env::SYNOPKG_CLI_WEB);
                 cmd.current_dir(env::SYNOPKG_PKGDEST);
                 cmd.envs(&self.envs)
