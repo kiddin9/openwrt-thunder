@@ -130,7 +130,7 @@ bash +x ./unpack.sh && cargo build --release --features embed && mv target/relea
 
 # 执行安装
 ./xunlei install
-# 若系统不支持systemctl，则手动启动daemon
+# 若系统不支持systemd，则手动启动daemon
 ./xunlei launch
 ```
 

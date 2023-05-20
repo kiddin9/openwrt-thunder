@@ -180,7 +180,7 @@ jobs:
       - name: Build and push
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          tag=${{ steps.tag.outputs.tag }} bash +x docker_build.sh
+          tag=${{ steps.tag.outputs.tag }} bash +x build_docker.sh
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3

@@ -3,10 +3,10 @@ pub mod env;
 pub mod launch;
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub mod libc_asset;
-#[cfg(feature = "systemd")]
-pub mod systemd;
+#[cfg(feature = "daemon")]
+pub mod daemon;
 pub mod util;
-#[cfg(feature = "systemd")]
+#[cfg(feature = "daemon")]
 pub mod xunlei_asset;
 
 use clap::{Args, Parser, Subcommand};
@@ -31,10 +31,10 @@ struct Opt {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    #[cfg(feature = "systemd")]
+    #[cfg(feature = "daemon")]
     /// Install xunlei
     Install(Config),
-    #[cfg(feature = "systemd")]
+    #[cfg(feature = "daemon")]
     /// Uninstall xunlei
     Uninstall {
         /// Clear xunlei default config directory
@@ -75,13 +75,13 @@ fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
     init_log(opt.debug);
     match opt.commands {
-        #[cfg(feature = "systemd")]
+        #[cfg(feature = "daemon")]
         Commands::Install(config) => {
-            systemd::XunleiInstall::from(config).run()?;
+            daemon::XunleiInstall::from(config).run()?;
         }
-        #[cfg(feature = "systemd")]
+        #[cfg(feature = "daemon")]
         Commands::Uninstall { clear } => {
-            systemd::XunleiUninstall::from(clear).run()?;
+            daemon::XunleiUninstall::from(clear).run()?;
         }
         #[cfg(feature = "launch")]
         Commands::Launch(config) => {
