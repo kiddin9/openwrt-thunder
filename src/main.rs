@@ -1,10 +1,10 @@
+#[cfg(feature = "daemon")]
+pub mod daemon;
 pub mod env;
 #[cfg(feature = "launch")]
 pub mod launch;
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub mod libc_asset;
-#[cfg(feature = "daemon")]
-pub mod daemon;
 pub mod util;
 #[cfg(feature = "daemon")]
 pub mod xunlei_asset;
