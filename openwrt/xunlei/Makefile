@@ -19,7 +19,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=xunlei
-  DEPENDS:=@(aarch64||x86_64)
+  DEPENDS:=@(aarch64||x86_64) +USE_GLIBC:libpthread +libgcc +libstdcpp
   URL:=https://nas.xunlei.com/
 endef
 
@@ -81,12 +81,14 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/xunlei.config $(1)/etc/config/xunlei
 
+	ifeq ($(CONFIG_USE_MUSL),y)
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host/exploit
 	$(INSTALL_BIN) $(CURDIR)/exploit/libc.so.6 $(1)/usr/share/xunlei/target/host/exploit/libc.so.6
 	$(INSTALL_BIN) $(CURDIR)/exploit/libdl.so.2 $(1)/usr/share/xunlei/target/host/exploit/libdl.so.2
 	$(INSTALL_BIN) $(CURDIR)/exploit/libm.so.6 $(1)/usr/share/xunlei/target/host/exploit/libm.so.6
 	$(INSTALL_BIN) $(CURDIR)/exploit/libstdc++.so.6 $(1)/usr/share/xunlei/target/host/exploit/libstdc++.so.6
 	$(INSTALL_BIN) $(CURDIR)/exploit/libpthread.so.0 $(1)/usr/share/xunlei/target/host/exploit/libpthread.so.0
+	endif
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
