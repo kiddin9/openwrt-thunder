@@ -9,7 +9,7 @@ for target in ${target_list[@]}; do
 
   # default feature
   cargo zigbuild --release --target=$target
-  upx target/$target/release/xunlei
+  upx --lzma target/$target/release/xunlei
   cargo deb --target=$target --no-build --no-strip
   cargo generate-rpm --target=$target --payload-compress none
   cd target/$target/release
@@ -34,7 +34,7 @@ for target in ${target_list[@]}; do
     bash +x unpack.sh
   fi
   cargo zigbuild --release --target=$target --no-default-features --features embed
-  upx target/$target/release/xunlei
+  upx --lzma target/$target/release/xunlei
   cargo deb --target=$target --no-build --no-strip
   cargo generate-rpm --target=$target --payload-compress none
   cd target/$target/release
@@ -56,12 +56,14 @@ for target in ${target_list[@]}; do
   mkdir -p xunlei-launch-$tag-$target/bin
   mv bin/* xunlei-launch-$tag-$target/bin/
   cargo zigbuild --release --target=$target --no-default-features --features launch
+  upx --lzma target/$target/release/xunlei
   mv target/$target/release/xunlei xunlei-launch-$tag-$target/
   tar -czvf xunlei-launch-$tag-$target.tar.gz xunlei-launch-$tag-$target/*
   shasum -a 256 xunlei-launch-$tag-$target.tar.gz >xunlei-launch-$tag-$target.tar.gz.sha256
   mv xunlei-launch-$tag-$target.tar.gz uploads/
   mv xunlei-launch-$tag-$target.tar.gz.sha256 uploads/
-
+  
   rm -r bin/*
+  rm -rf xunlei-launch-$tag-$target
   ls -lah uploads
 done
