@@ -15,7 +15,7 @@ xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpi
 - 只支持X86_64/aarch64
 - 支持glibc/musl
 - 可搭配远程挂载下载到NAS
-- 内侧邀请码（3H9F7Y6D），内侧码申请快速通道：https://t.cn/A6fhraWZ
+- 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
 - 支持插件：NAS小星（pcdn），测速插件
 
 ```shell
