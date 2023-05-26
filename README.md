@@ -12,9 +12,10 @@
 
 xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpine/Docker）的迅雷远程下载服务。仅供测试，测试完请自觉删除。
 
-- 只支持X86_64/aarch64
+- 支持X86_64/aarch64
 - 支持glibc/musl
-- 可搭配远程挂载下载到NAS
+- 支持搭配远程挂载下载到NAS
+- 支持更改绑定下载目录
 - 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
 - 支持插件：NAS小星（pcdn），测速插件
 
@@ -145,6 +146,5 @@ make V=s
 ```
 
 ### FQA
- - 如果你是升级了最新版本无法启动/或者装过别人打包的xunlei，请先SSH执行`service xunlei disable && service xunlei enable`
  - 迅雷插件依赖bash，系统需要安装bash
  - alpine需要自己挂载分区，和安装bash（apk add bash）
