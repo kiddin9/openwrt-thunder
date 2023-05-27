@@ -30,10 +30,8 @@ for target in ${target_list[@]}; do
   # embed feature
   if [[ $target == *"aarch64"* ]]; then
     arch=aarch64 bash +x unpack.sh
-    upx --lzma bin/xunlei-pan-cli-launcher.arm64
   else
     bash +x unpack.sh
-    upx --lzma bin/xunlei-pan-cli-launcher.amd64
   fi
   cargo zigbuild --release --target=$target --no-default-features --features embed
   upx --lzma target/$target/release/xunlei

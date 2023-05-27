@@ -4,6 +4,10 @@ target_path=/var/packages/pan-xunlei-com/target
 version=$(cat $target_path/version)
 arch=$(cat /arch)
 
+if strings -a $target_path/xunlei-pan-cli-launcher.$arch | grep -q UPX; then
+    upx -d $target_path/xunlei-pan-cli-launcher.$arch >/dev/null
+fi
+
 if strings -a $target_path/xunlei-pan-cli-web | grep -q UPX; then
     upx -d $target_path/xunlei-pan-cli-web >/dev/null
 fi

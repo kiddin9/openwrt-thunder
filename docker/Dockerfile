@@ -18,6 +18,7 @@ RUN tar -xvf xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
 RUN mv xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl/bin/* /var/packages/pan-xunlei-com/target/
 RUN mv xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl/xunlei .
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-web
+RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.$(cat ali_arch)
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli.$(cat /var/packages/pan-xunlei-com/target/version).$(cat ali_arch)
 
 FROM alpine:latest
