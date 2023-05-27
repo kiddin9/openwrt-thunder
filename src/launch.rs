@@ -17,8 +17,8 @@ use std::{
     process::Stdio,
 };
 
-const HTML_LOGIN: &str = include_str!("../static/login.html");
-const JS_SHA3: &str = include_str!("../static/sha3.min.js");
+const HTML_LOGIN: &str = include_str!("static/login.html");
+const JS_SHA3: &str = include_str!("static/sha3.min.js");
 
 // hasher auth message
 fn hasher_auth_message(s: &str) -> String {

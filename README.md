@@ -98,7 +98,7 @@ xunlei launch
 ### Docker 运行
 
 ```bash
-docker run --rm -itd --privileged -p 5055:5055 --hostname=xunlei \
+docker run -itd --privileged -p 5055:5055 --hostname=xunlei \
   -v $(pwd)/data:/opt/data \
   -v $(pwd)/downloads:/downloads \
   -e XUNLEI_AUTH_USER=admin \
