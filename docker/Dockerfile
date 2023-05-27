@@ -40,5 +40,15 @@ COPY --from=builder /ali_arch /arch
 COPY --from=builder /xunlei /bin/xunlei
 COPY --from=builder /var/packages/pan-xunlei-com/target /var/packages/pan-xunlei-com/target
 
+RUN mkdir -p /rootfs/bin /rootfs/run \
+    /rootfs/lib /rootfs/proc \
+    /rootfs/usr /rootfs/mnt \
+    /rootfs/etc /rootfs/sbin \
+    /rootfs/sys /rootfs/dev \
+    /rootfs/var /rootfs/tmp \
+    /rootfs/root /rootfs/boot \
+    /rootfs/opt/data /rootfs/downloads \
+    /opt/data /downloads
+
 VOLUME [ "/opt/data", "/downloads" ]
 ENTRYPOINT ["/bin/bash", "+x", "/bin/run.sh"]

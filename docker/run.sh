@@ -16,16 +16,6 @@ if strings -a $target_path/xunlei-pan-cli.$version.$arch | grep -q UPX; then
     upx -d $target_path/xunlei-pan-cli.$version.$arch >/dev/null
 fi
 
-mkdir -p /rootfs/bin /rootfs/run \
-    /rootfs/lib /rootfs/proc \
-    /rootfs/usr /rootfs/mnt \
-    /rootfs/etc /rootfs/sbin \
-    /rootfs/sys /rootfs/dev \
-    /rootfs/var /rootfs/tmp \
-    /rootfs/root /rootfs/boot \
-    /rootfs/opt/data /rootfs/downloads \
-    /opt/data /downloads
-
 target_var=/var/packages/pan-xunlei-com/target/var
 if [ ! -d "$target_var" ]; then
     path="/var/packages/pan-xunlei-com/target/host/etc"
