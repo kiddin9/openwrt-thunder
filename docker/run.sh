@@ -1,9 +1,34 @@
 #!/bin/bash
 
+mkdir -p /rootfs/bin /rootfs/run \
+    /rootfs/lib /rootfs/proc \
+    /rootfs/usr /rootfs/mnt \
+    /rootfs/etc /rootfs/sbin \
+    /rootfs/sys /rootfs/dev \
+    /rootfs/var /rootfs/tmp \
+    /rootfs/root /rootfs/boot \
+    /rootfs/opt/data /rootfs/downloads \
+    /opt/data /downloads
+
+if [ ! -f "/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf" ]; then
+    path="/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules"
+    mkdir -p $path
+    echo -e '#!/usr/bin/env sh\necho OK' > $path/authenticate.cgi
+    chmod 755 $path/authenticate.cgi
+fi
+
+if [ ! -f "/var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf" ]; then
+    path="/var/packages/pan-xunlei-com/target/host/etc"
+    mkdir -p /var/packages/pan-xunlei-com/target/host/etc
+    echo 'unique="synology_bb633c4_720+"' > $path/synoinfo.conf
+    chmod 755 $path/synoinfo.conf
+fi
+
 if [ ! -d "/var/packages/pan-xunlei-com/target/var" ]; then
     id=$(cat /proc/sys/kernel/random/uuid | cut -c1-7)
     echo "unique=\"synology_${id}_720+\"" > /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
 fi
+
 mkdir -p /usr/syno/synoman/webman/modules
 ln -s /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 ln -s /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
