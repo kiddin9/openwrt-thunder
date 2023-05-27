@@ -259,7 +259,16 @@ impl Running for XunleiBackendServer {
                 signal_hook::consts::SIGINT
                 | signal_hook::consts::SIGHUP
                 | signal_hook::consts::SIGTERM => {
-                    unsafe { libc::kill(backend_pid, libc::SIGINT) };
+                    let state = unsafe { libc::kill(backend_pid, libc::SIGINT) };
+                    if state < 0 {
+                        log::warn!(
+                            "[XunleiBackendServer] The backend kill error: {}, An attempt was made to send SIGTERM to continue terminating",
+                            std::io::Error::last_os_error()
+                        );
+                        unsafe {
+                            libc::kill(backend_pid, libc::SIGTERM);
+                        }
+                    }
                     log::info!("[XunleiBackendServer] The backend service has been terminated");
                     break;
                 }
