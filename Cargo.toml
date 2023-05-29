@@ -13,7 +13,7 @@ readme = "README.md"
 [dependencies]
 log = "0.4.17"
 env_logger = "0.10.0"
-chrono = "0.4.22"
+chrono = "0.4.25"
 anyhow = "1.0.71"
 rust-embed = "6.6.0"
 libc = "0.2.144"
