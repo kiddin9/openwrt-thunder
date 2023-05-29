@@ -63,7 +63,7 @@ for target in ${target_list[@]}; do
   mv xunlei-launch-$tag-$target.tar.gz uploads/
   mv xunlei-launch-$tag-$target.tar.gz.sha256 uploads/
   
-  rm -r bin/*
+  rm -rf bin
   rm -rf xunlei-launch-$tag-$target
   ls -lah uploads
 done

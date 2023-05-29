@@ -4,7 +4,7 @@ use std::borrow::Cow;
 #[cfg(not(feature = "embed"))]
 use std::{io::Write, ops::Not, path::PathBuf};
 
-pub trait Xunlei {
+pub trait XunleiAsset {
     fn version(&self) -> anyhow::Result<String>;
 
     fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>>;
@@ -24,7 +24,7 @@ use anyhow::Context;
 struct XunleiEmbedAsset;
 
 #[cfg(feature = "embed")]
-impl Xunlei for XunleiEmbedAsset {
+impl XunleiAsset for XunleiEmbedAsset {
     fn version(&self) -> anyhow::Result<String> {
         let version_bin = Asset::get("version").context("Failed to get version asset")?;
         let version = std::str::from_utf8(version_bin.data.as_ref())
@@ -117,7 +117,7 @@ impl XunleiLocalAsset {
 }
 
 #[cfg(not(feature = "embed"))]
-impl Xunlei for XunleiLocalAsset {
+impl XunleiAsset for XunleiLocalAsset {
     fn version(&self) -> anyhow::Result<String> {
         Ok(std::fs::read_to_string(
             PathBuf::from(&self.tmp_path).join("version"),
@@ -144,7 +144,7 @@ impl Xunlei for XunleiLocalAsset {
     }
 }
 
-pub fn asset() -> anyhow::Result<impl Xunlei> {
+pub fn asset() -> anyhow::Result<impl XunleiAsset> {
     #[cfg(not(feature = "embed"))]
     let asset = XunleiLocalAsset::new()?;
     #[cfg(feature = "embed")]
