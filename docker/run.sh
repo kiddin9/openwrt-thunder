@@ -26,6 +26,7 @@ if [ ! -d "$target_var" ]; then
 
     path="/var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules"
     mkdir -p $path
+    mkdir -p /usr/syno/synoman/webman/modules
     echo -e '#!/usr/bin/env sh\necho OK' >$path/authenticate.cgi
     chmod 755 $path/authenticate.cgi
 else
@@ -41,7 +42,6 @@ if [ -f /usr/syno/synoman/webman/modules/authenticate.cgi ]; then
     rm /usr/syno/synoman/webman/modules/authenticate.cgi
 fi
 
-mkdir -p /usr/syno/synoman/webman/modules
 ln -s /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 ln -s /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
 
