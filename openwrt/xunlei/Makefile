@@ -52,7 +52,7 @@ endef
 define Package/$(PKG_NAME)/postrm
 #!/bin/sh
   rm -rf /usr/share/xunlei
-  rm -rf /usr/syno/synoman/webman/modules
+  rm -rf /usr/syno
   exit 0
 endef
 
@@ -69,12 +69,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host
 	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/usr/share/xunlei/target/
-
-	$(INSTALL_DIR) $(1)/usr/syno/synoman/webman/modules
-	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host/etc
-	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host/usr/syno/synoman/webman/modules
-	$(INSTALL_BIN) $(CURDIR)/files/synoinfo.conf $(1)/usr/share/xunlei/target/host/etc/synoinfo.conf
-	$(INSTALL_BIN) $(CURDIR)/files/authenticate.cgi $(1)/usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(CURDIR)/files/xunlei.init $(1)/etc/init.d/xunlei
