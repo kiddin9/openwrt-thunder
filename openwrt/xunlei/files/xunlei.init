@@ -20,22 +20,32 @@ start_service() {
 	config_foreach get_config xunlei
 	[ $enabled -ne 1 ] && return 1
 
-	if [ ! -d "/usr/share/xunlei/target/var" ];then
+	if [ ! -d "/usr/share/xunlei/target/var" ]; then
+		path="/usr/share/xunlei/target/host/etc"
+		mkdir -p $path
 		id=$(cat /proc/sys/kernel/random/uuid | cut -c1-7)
-		echo "unique=\"synology_${id}_720+\"" > /usr/share/xunlei/target/host/etc/synoinfo.conf
+		echo "unique=\"synology_${id}_720+\"" >$path/synoinfo.conf
+		chmod 755 $path/synoinfo.conf
+
+		path="/usr/share/xunlei/target/host/usr/syno/synoman/webman/modules"
+		mkdir -p $path
+		mkdir -p /usr/syno/synoman/webman/modules
+		echo -e '#!/usr/bin/env sh\necho OK' >$path/authenticate.cgi
+		chmod 755 $path/authenticate.cgi
 	fi
 
-	if [ -f /etc/synoinfo.conf ];then
+	if [ -f /etc/synoinfo.conf ]; then
 		rm /etc/synoinfo.conf
 	fi
 
-	if [ -f /usr/syno/synoman/webman/modules/authenticate.cgi ];then
+	if [ -f /usr/syno/synoman/webman/modules/authenticate.cgi ]; then
 		rm /usr/syno/synoman/webman/modules/authenticate.cgi
 	fi
 
-	rm -rf /var/packages/pan-xunlei-com
-	mkdir -p /var/packages/pan-xunlei-com
-	
+	if [ -d /var/packages/pan-xunlei-com ]; then
+		mkdir -p /var/packages/pan-xunlei-com
+	fi	
+
 	ln -s /usr/share/xunlei/target /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 	ln -s /usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
@@ -59,10 +69,10 @@ service_triggers() {
 reload_service() {
 	stop
 	for i in $(seq 1 20); do
-        if [ -z "$(ps -ef | grep xunlei | grep -v grep | grep -v $$ |grep -v '/etc/rc.common' | grep -v '/sbin/service' | grep -v '/sbin/luci-reload')" ]; then
+		if [ -z "$(ps -ef | grep xunlei | grep -v grep | grep -v $$ | grep -v '/etc/rc.common' | grep -v '/sbin/service' | grep -v '/sbin/luci-reload')" ]; then
 			break
-        fi
-        sleep 1
+		fi
+		sleep 1
 	done
 	start
 }
