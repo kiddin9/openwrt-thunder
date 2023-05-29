@@ -14,12 +14,11 @@ xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpi
 
 - 支持X86_64/aarch64
 - 支持glibc/musl
-- 支持搭配远程挂载下载到NAS
 - 支持更改下载目录
 - 支持面板认证
 - Docker镜像最小压缩（40MB左右）
-- 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
 - 支持插件：NAS小星（pcdn），测速插件
+- 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
 
 ```shell
 ❯ ./xunlei                   
@@ -108,7 +107,7 @@ docker run -itd --privileged -p 5055:5055 --hostname=xunlei \
 ```
 
 ### OpenWrt 路由器
-GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，可以下载后使用 opkg 安装，以 nanopi r4s 为例：
+GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，下载后使用 opkg 安装，以 nanopi r4s 为例：
 
 ```shell
 wget https://github.com/gngpp/xunlei/releases/download/v3.8.0-19/xunlei_3.8.0-19_aarch64_generic.ipk
@@ -148,7 +147,6 @@ make V=s
 ```
 
 ### FQA
- - 迅雷插件依赖bash，系统需要安装bash
- - alpine需要自己挂载分区，和安装bash（apk add bash）
+ - 插件依赖bash，系统需要安装bash
  - musl运行库的操作系统，若已存在glibc运行库，那么会优先兼容选择使用操作系统运行库环境（可能会缺依赖，自行补全）
  - 指定运行LD加载库或压缩目前无法做到（二进制带签名），需要逆向打patch
