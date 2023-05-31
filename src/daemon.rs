@@ -203,8 +203,8 @@ impl XunleiInstall {
                 [Service]
                 Type=simple
                 ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {} {}
-                LimitNOFILE=1024
-                LimitNPROC=512
+                LimitNOFILE=2048
+                LimitNPROC=1024
                 User={}
                 
                 [Install]
