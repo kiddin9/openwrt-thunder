@@ -287,8 +287,8 @@ impl XunleiUninstall {
 impl Running for XunleiUninstall {
     fn run(self) -> anyhow::Result<()> {
         if Systemd::support() {
-            Systemd::systemctl(["disable", env::APP_NAME])?;
             Systemd::systemctl(["stop", env::APP_NAME])?;
+            Systemd::systemctl(["disable", env::APP_NAME])?;
             Systemd::systemctl(["daemon-reload"])?;
         }
         self.uninstall()?;

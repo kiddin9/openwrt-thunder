@@ -190,6 +190,7 @@ impl Running for XunleiBackendServer {
             util::create_dir_all(&self.download_path, 0o755)?;
         }
 
+        let _ = nix::mount::umount(&self.mount_bind_download_path);
         match nix::mount::mount(
             Some(&self.download_path),
             &self.mount_bind_download_path,
@@ -209,7 +210,7 @@ impl Running for XunleiBackendServer {
                     "[XunleiBackendServer] Mount {} to {} failed",
                     self.download_path.display(),
                     self.mount_bind_download_path.display()
-                )
+                );
             }
         };
 
