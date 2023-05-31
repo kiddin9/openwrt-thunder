@@ -1,5 +1,3 @@
-extern crate libc;
-
 use std::ops::Not;
 use std::path::Path;
 use std::path::PathBuf;
@@ -31,16 +29,14 @@ pub struct XunleiInstall {
 
 impl From<(bool, Config)> for XunleiInstall {
     fn from(value: (bool, Config)) -> Self {
-        let uid = unsafe { libc::getuid() };
-        let gid = unsafe { libc::getgid() };
         Self {
             description: "Thunder remote download service",
             host: value.1.host,
             port: value.1.port,
             download_path: value.1.download_path,
             config_path: value.1.config_path,
-            uid,
-            gid,
+            uid: nix::unistd::getuid().into(),
+            gid: nix::unistd::getgid().into(),
             auth_user: value.1.auth_user,
             auth_password: value.1.auth_password,
             debug: value.0,
@@ -78,7 +74,8 @@ impl XunleiInstall {
 
     fn install(&self) -> anyhow::Result<std::path::PathBuf> {
         log::info!("[XunleiInstall] Installing in progress");
-
+        //  /var/packages/pan-xunlei-com
+        let base_dir = Path::new(env::SYNOPKG_PKGBASE);
         // /var/packages/pan-xunlei-com/target
         let target_dir = PathBuf::from(env::SYNOPKG_PKGDEST);
         // /var/packages/pan-xunlei-com/target/host
@@ -95,29 +92,26 @@ impl XunleiInstall {
             log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
         }
 
-        util::set_permissions(env::SYNOPKG_PKGBASE, self.uid, self.gid).context(format!(
+        util::set_permissions(&base_dir, self.uid, self.gid).context(format!(
             "Failed to set permission: {}, PUID:{}, GUID:{}",
-            env::SYNOPKG_PKGBASE,
+            base_dir.display(),
             self.uid,
             self.gid
         ))?;
 
-        util::set_permissions(target_dir.to_str().unwrap(), self.uid, self.gid).context(
-            format!(
-                "Failed to set permission: {}, PUID:{}, GUID:{}",
-                target_dir.display(),
-                self.uid,
-                self.gid
-            ),
-        )?;
+        util::set_permissions(&target_dir, self.uid, self.gid).context(format!(
+            "Failed to set permission: {}, PUID:{}, GUID:{}",
+            target_dir.display(),
+            self.uid,
+            self.gid
+        ))?;
 
         // path: /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-        let syno_info_path =
-            PathBuf::from(format!("{}{}", host_dir.display(), env::SYNO_INFO_PATH));
+        let synoinfo_path = PathBuf::from(format!("{}{}", host_dir.display(), env::SYNO_INFO_PATH));
         util::create_dir_all(
-            syno_info_path.parent().context(format!(
+            synoinfo_path.parent().context(format!(
                 "the path: {} parent not exists",
-                syno_info_path.display()
+                synoinfo_path.display()
             ))?,
             0o755,
         )?;
@@ -131,7 +125,7 @@ impl XunleiInstall {
             .take(7)
             .collect::<String>();
         util::write_file(
-            &syno_info_path,
+            &synoinfo_path,
             std::borrow::Cow::Borrowed(
                 format!("unique=\"synology_{}_720+\"", hex_string).as_bytes(),
             ),
@@ -157,38 +151,25 @@ impl XunleiInstall {
             0o755,
         )?;
 
-        // symlink
-        unsafe {
-            if Path::new(env::SYNO_INFO_PATH).exists().not() {
-                let source_sys_info_path =
-                    std::ffi::CString::new(syno_info_path.display().to_string())?;
-                let target_sys_info_path = std::ffi::CString::new(env::SYNO_INFO_PATH)?;
-                if libc::symlink(source_sys_info_path.as_ptr(), target_sys_info_path.as_ptr()) != 0
-                {
-                    anyhow::bail!(std::io::Error::last_os_error());
-                }
-            }
+        let target_synoinfo_path = Path::new(env::SYNO_INFO_PATH);
+        nix::unistd::symlinkat(&synoinfo_path, None, target_synoinfo_path).context(format!(
+            "falied symlink {} to {}",
+            synoinfo_path.display(),
+            target_synoinfo_path.display()
+        ))?;
 
-            let link_syno_authenticate_path = Path::new(env::SYNO_AUTHENTICATE_PATH);
-            if link_syno_authenticate_path.exists().not() {
-                let source_syno_authenticate_path =
-                    std::ffi::CString::new(syno_authenticate_path.display().to_string())?;
-                let target_syno_authenticate_path =
-                    std::ffi::CString::new(env::SYNO_AUTHENTICATE_PATH)?;
-                let patent_ = link_syno_authenticate_path.parent().context(format!(
-                    "directory path: {} not exists",
-                    link_syno_authenticate_path.display()
-                ))?;
-                util::create_dir_all(patent_, 0o755)?;
-                if libc::symlink(
-                    source_syno_authenticate_path.as_ptr(),
-                    target_syno_authenticate_path.as_ptr(),
-                ) != 0
-                {
-                    anyhow::bail!(std::io::Error::last_os_error());
-                }
-            }
-        }
+        let target_syno_authenticate_path = Path::new(env::SYNO_AUTHENTICATE_PATH);
+        let patent_ = target_syno_authenticate_path.parent().context(format!(
+            "directory path: {} not exists",
+            target_syno_authenticate_path.display()
+        ))?;
+        util::create_dir_all(patent_, 0o755)?;
+        nix::unistd::symlinkat(&syno_authenticate_path, None, target_syno_authenticate_path)
+            .context(format!(
+                "falied symlink {} to {}",
+                syno_authenticate_path.display(),
+                target_syno_authenticate_path.display()
+            ))?;
 
         log::info!("[XunleiInstall] Installation completed");
         Ok(std::env::current_exe()?)
@@ -277,6 +258,19 @@ impl XunleiUninstall {
             std::fs::remove_dir_all(path)?;
             log::info!("[XunleiUninstall] Uninstall xunlei package");
         }
+
+        fn remove_if_symlink(path: &Path) -> Result<(), std::io::Error> {
+            if let Ok(metadata) = std::fs::symlink_metadata(path) {
+                if metadata.file_type().is_symlink() {
+                    std::fs::remove_file(path)?;
+                    log::info!("[XunleiUninstall] Uninstall xunlei {}", path.display());
+                }
+            }
+            Ok(())
+        }
+
+        remove_if_symlink(Path::new(env::SYNO_INFO_PATH))?;
+        remove_if_symlink(Path::new(env::SYNO_AUTHENTICATE_PATH))?;
 
         // Clear xunlei default config directory
         if self.clear {
