@@ -1,3 +1,5 @@
+use nix::mount::MsFlags;
+use nix::unistd::Pid;
 use rouille::router;
 use rouille::Request;
 use rouille::Response;
@@ -164,46 +166,11 @@ impl Running for XunleiLauncher {
     }
 }
 
-use libc::{mount, umount2, MNT_DETACH, MS_BIND};
-use std::ffi::CString;
-use std::os::raw::c_int;
-use std::ptr;
-
 struct XunleiBackendServer {
     download_path: PathBuf,
     mount_bind_download_path: PathBuf,
     envs: HashMap<String, String>,
     debug: bool,
-}
-
-impl XunleiBackendServer {
-    fn bind_mount(source: &Path, target: &Path) -> c_int {
-        if Self::umount(target) == 0 {
-            log::info!(
-                "[XunleiBackendServer] Unmount {} succeeded.",
-                target.display()
-            )
-        }
-        let source_cstr =
-            CString::new(format!("{}", source.display())).expect("source CString new error");
-        let target_cstr =
-            CString::new(format!("{}", target.display())).expect("target CString new error");
-        unsafe {
-            mount(
-                source_cstr.as_ptr(),
-                target_cstr.as_ptr(),
-                ptr::null(),
-                MS_BIND,
-                ptr::null(),
-            )
-        }
-    }
-
-    fn umount(target: &Path) -> c_int {
-        let target_cstr =
-            CString::new(format!("{}", target.display())).expect("target CString new error");
-        unsafe { umount2(target_cstr.as_ptr(), MNT_DETACH) }
-    }
 }
 
 impl Running for XunleiBackendServer {
@@ -223,18 +190,28 @@ impl Running for XunleiBackendServer {
             util::create_dir_all(&self.download_path, 0o755)?;
         }
 
-        match Self::bind_mount(&self.download_path, &self.mount_bind_download_path) {
-            0 => log::info!(
-                "[XunleiBackendServer] Mount {} to {} succeeded",
-                self.download_path.display(),
-                self.mount_bind_download_path.display()
-            ),
-            _ => anyhow::bail!(
-                "[XunleiBackendServer] Mount {} to {} failed",
-                self.download_path.display(),
-                self.mount_bind_download_path.display()
-            ),
-        }
+        match nix::mount::mount(
+            Some(&self.download_path),
+            &self.mount_bind_download_path,
+            <Option<&'static [u8]>>::None,
+            MsFlags::MS_BIND,
+            <Option<&'static [u8]>>::None,
+        ) {
+            Ok(_) => {
+                log::info!(
+                    "[XunleiBackendServer] Mount {} to {} succeeded",
+                    self.download_path.display(),
+                    self.mount_bind_download_path.display()
+                )
+            }
+            Err(_) => {
+                anyhow::bail!(
+                    "[XunleiBackendServer] Mount {} to {} failed",
+                    self.download_path.display(),
+                    self.mount_bind_download_path.display()
+                )
+            }
+        };
 
         log::info!("[XunleiBackendServer] Start Xunlei Backend Server");
         let mut cmd = std::process::Command::new(env::LAUNCHER_EXE);
@@ -251,7 +228,7 @@ impl Running for XunleiBackendServer {
                 .stdout(Stdio::null());
         }
         let backend_process = cmd.spawn()?;
-        let backend_pid = backend_process.id() as libc::pid_t;
+        let backend_pid = backend_process.id() as i32;
         log::info!(
             "[XunleiBackendServer] Xunlei Backend Server PID: {}",
             backend_pid
@@ -268,17 +245,21 @@ impl Running for XunleiBackendServer {
                 signal_hook::consts::SIGINT
                 | signal_hook::consts::SIGHUP
                 | signal_hook::consts::SIGTERM => {
-                    let state = unsafe { libc::kill(backend_pid, libc::SIGINT) };
-                    if state < 0 {
-                        log::warn!(
-                            "[XunleiBackendServer] The backend kill error: {}, An attempt was made to send SIGTERM to continue terminating",
-                            std::io::Error::last_os_error()
-                        );
-                        unsafe {
-                            libc::kill(backend_pid, libc::SIGTERM);
+                    match nix::sys::signal::kill(
+                        Pid::from_raw(backend_pid),
+                        nix::sys::signal::SIGINT,
+                    ) {
+                        Ok(_) => {
+                            log::info!(
+                                "[XunleiBackendServer] The backend service has been terminated"
+                            )
+                        }
+                        Err(_) => {
+                            nix::sys::signal::kill(Pid::from_raw(backend_pid),
+                            nix::sys::signal::SIGTERM).expect(&format!("[XunleiBackendServer] The backend kill error: {}, An attempt was made to send SIGTERM to continue terminating",
+                                                        std::io::Error::last_os_error()));
                         }
                     }
-                    log::info!("[XunleiBackendServer] The backend service has been terminated");
                     break;
                 }
                 _ => {
@@ -288,16 +269,20 @@ impl Running for XunleiBackendServer {
         }
 
         // umount bind directory
-        match Self::umount(&self.mount_bind_download_path) {
-            0 => log::info!(
-                "[XunleiBackendServer] Unmount {} succeeded",
-                self.mount_bind_download_path.display()
-            ),
-            _ => log::error!(
-                "[XunleiBackendServer] Unmount {} failed",
-                self.mount_bind_download_path.display()
-            ),
-        }
+        match nix::mount::umount(&self.mount_bind_download_path) {
+            Ok(_) => {
+                log::info!(
+                    "[XunleiBackendServer] Unmount {} succeeded",
+                    self.mount_bind_download_path.display()
+                )
+            }
+            Err(_) => {
+                log::error!(
+                    "[XunleiBackendServer] Unmount {} failed",
+                    self.mount_bind_download_path.display()
+                )
+            }
+        };
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 use std::{fs, os::unix::prelude::PermissionsExt, path::Path};
 
-use std::{borrow::Cow, io::Write, os::unix::prelude::OsStrExt, path::PathBuf};
+use std::{borrow::Cow, io::Write, path::PathBuf};
 
 use anyhow::Context;
 
@@ -22,15 +22,9 @@ fn set_dir_permission(path: &Path, permission: u32) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn set_permissions(target_path: &str, uid: u32, gid: u32) -> anyhow::Result<()> {
-    let filename = std::ffi::OsStr::new(target_path).as_bytes();
-    let c_filename = std::ffi::CString::new(filename)?;
-
-    let res = unsafe { libc::chown(c_filename.as_ptr(), uid, gid) };
-    if res != 0 {
-        let errno = std::io::Error::last_os_error();
-        return Err(anyhow::anyhow!("chown {} error: {}", target_path, errno));
-    }
+pub fn set_permissions(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
+    nix::unistd::chown(target_path, Some(uid.into()), Some(gid.into()))
+        .context(format!("chown {} error", target_path.display()))?;
     Ok(())
 }
 

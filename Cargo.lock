@@ -1624,7 +1624,6 @@ dependencies = [
  "clap",
  "env_logger",
  "indicatif",
- "libc",
  "log",
  "nix",
  "rand",

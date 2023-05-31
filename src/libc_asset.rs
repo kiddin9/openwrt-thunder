@@ -85,13 +85,8 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                     return Ok(());
                 }
                 let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
-                unsafe {
-                    let source_path = CString::new(syno_ld_path.display().to_string())?;
-                    let target_path = CString::new(sys_ld_path.display().to_string())?;
-                    if libc::symlink(source_path.as_ptr(), target_path.as_ptr()) != 0 {
-                        anyhow::bail!(std::io::Error::last_os_error());
-                    }
-                }
+                nix::unistd::symlinkat(syno_ld_path, None, &sys_ld_path)?;
+
                 envs.insert(
                     String::from("LD_LIBRARY_PATH"),
                     env::SYNOPKG_LIB.to_string(),
