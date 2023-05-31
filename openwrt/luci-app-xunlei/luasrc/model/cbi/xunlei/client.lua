@@ -12,6 +12,9 @@ s.anonymous = true
 o = s:option(Flag, "enabled", translate("Enabled"))
 o.rmempty = false
 
+o = s:option(Flag, "debug", translate("Debug"))
+o.rmempty = false
+
 o = s:option(Value, "host", translate("Host"))
 o.default = "0.0.0.0"
 o.datatype = "ipaddr"
