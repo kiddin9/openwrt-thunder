@@ -17,6 +17,7 @@ chrono = "0.4.25"
 anyhow = "1.0.71"
 rust-embed = "6.6.0"
 libc = "0.2.144"
+nix = "0.26.2"
 rand = "0.8.5"
 ureq = "2.6.2"
 sha3 = "0.10.8"
@@ -26,9 +27,9 @@ signal-hook = "0.3.15"
 clap = { version = "4.3.0", features = ["derive", "env"] }
 
 [features]
-default = ["launch", "daemon"]
-embed = ["launch", "daemon"]
-launch = []
+default = ["launcher", "daemon"]
+embed = ["launcher", "daemon"]
+launcher = []
 daemon = []
 
 [[bin]]

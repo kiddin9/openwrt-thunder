@@ -13,10 +13,10 @@ RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
     fi
 RUN apk update && apk add wget upx
 RUN mkdir -p /var/packages/pan-xunlei-com/target && chmod 755 /var/packages/pan-xunlei-com/target
-RUN wget https://github.com/gngpp/xunlei/releases/download/v${VERSION}/xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
-RUN tar -xvf xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
-RUN mv xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl/bin/* /var/packages/pan-xunlei-com/target/
-RUN mv xunlei-launch-${VERSION}-$(cat arch)-unknown-linux-musl/xunlei .
+RUN wget https://github.com/gngpp/xunlei/releases/download/v${VERSION}/xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
+RUN tar -xvf xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
+RUN mv xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl/bin/* /var/packages/pan-xunlei-com/target/
+RUN mv xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl/xunlei .
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-web
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.$(cat ali_arch)
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli.$(cat /var/packages/pan-xunlei-com/target/version).$(cat ali_arch)

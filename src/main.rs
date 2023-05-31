@@ -1,8 +1,8 @@
 #[cfg(feature = "daemon")]
 pub mod daemon;
 pub mod env;
-#[cfg(feature = "launch")]
-pub mod launch;
+#[cfg(feature = "launcher")]
+pub mod launcher;
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub mod libc_asset;
 pub mod util;
@@ -22,7 +22,7 @@ pub trait Running {
 #[command(args_conflicts_with_subcommands = true)]
 struct Opt {
     /// Enable debug
-    #[clap(long, global = true)]
+    #[clap(long, global = true, env = "XUNLEI_DEBUG")]
     debug: bool,
 
     #[clap(subcommand)]
@@ -41,9 +41,9 @@ pub enum Commands {
         #[clap(short, long)]
         clear: bool,
     },
-    #[cfg(feature = "launch")]
-    /// Launch xunlei
-    Launch(Config),
+    #[cfg(feature = "launcher")]
+    /// Launcher xunlei
+    Launcher(Config),
 }
 
 #[derive(Args)]
@@ -55,10 +55,10 @@ pub struct Config {
     #[arg(short = 'W', long, env = "XUNLEI_AUTH_PASSWORD")]
     auth_password: Option<String>,
     /// Xunlei Listen host
-    #[clap(short, long, default_value = "0.0.0.0", value_parser = parser_host)]
+    #[clap(short = 'H', long, default_value = "0.0.0.0", value_parser = parser_host)]
     host: std::net::IpAddr,
     /// Xunlei Listen port
-    #[clap(short, long, default_value = "5055", value_parser = parser_port_in_range)]
+    #[clap(short = 'P', long, default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
     /// Xunlei config directory
     #[clap(short, long, default_value = env::DEFAULT_CONFIG_PATH)]
@@ -77,15 +77,15 @@ fn main() -> anyhow::Result<()> {
     match opt.commands {
         #[cfg(feature = "daemon")]
         Commands::Install(config) => {
-            daemon::XunleiInstall::from(config).run()?;
+            daemon::XunleiInstall::from((opt.debug, config)).run()?;
         }
         #[cfg(feature = "daemon")]
         Commands::Uninstall { clear } => {
             daemon::XunleiUninstall::from(clear).run()?;
         }
-        #[cfg(feature = "launch")]
-        Commands::Launch(config) => {
-            launch::XunleiLauncher::from(config).run()?;
+        #[cfg(feature = "launcher")]
+        Commands::Launcher(config) => {
+            launcher::XunleiLauncher::from((opt.debug, config)).run()?;
         }
     }
     Ok(())

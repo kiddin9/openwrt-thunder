@@ -22,26 +22,28 @@ pub struct XunleiInstall {
     auth_password: Option<String>,
     host: std::net::IpAddr,
     port: u16,
+    debug: bool,
     download_path: PathBuf,
     config_path: PathBuf,
     uid: u32,
     gid: u32,
 }
 
-impl From<Config> for XunleiInstall {
-    fn from(config: Config) -> Self {
+impl From<(bool, Config)> for XunleiInstall {
+    fn from(value: (bool, Config)) -> Self {
         let uid = unsafe { libc::getuid() };
         let gid = unsafe { libc::getgid() };
         Self {
             description: "Thunder remote download service",
-            host: config.host,
-            port: config.port,
-            download_path: config.download_path,
-            config_path: config.config_path,
+            host: value.1.host,
+            port: value.1.port,
+            download_path: value.1.download_path,
+            config_path: value.1.config_path,
             uid,
             gid,
-            auth_user: config.auth_user,
-            auth_password: config.auth_password,
+            auth_user: value.1.auth_user,
+            auth_password: value.1.auth_password,
+            debug: value.0,
         }
     }
 }
@@ -192,7 +194,7 @@ impl XunleiInstall {
         Ok(std::env::current_exe()?)
     }
 
-    fn systemd(&self, launch: PathBuf) -> anyhow::Result<()> {
+    fn systemd(&self, binary: PathBuf) -> anyhow::Result<()> {
         if Systemd::support().not() {
             return Ok(());
         }
@@ -206,6 +208,11 @@ impl XunleiInstall {
             false => "".to_string(),
         };
 
+        let debug = match self.debug {
+            true => "--debug",
+            false => "",
+        };
+
         let systemctl_unit = format!(
             r#"[Unit]
                 Description={}
@@ -214,7 +221,7 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart={} launch -h {} -p {} -d {} -c {} {}
+                ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {} {}
                 LimitNOFILE=1024
                 LimitNPROC=512
                 User={}
@@ -222,12 +229,13 @@ impl XunleiInstall {
                 [Install]
                 WantedBy=multi-user.target"#,
             self.description,
-            launch.display(),
+            binary.display(),
             self.host,
             self.port,
             self.download_path.display(),
             self.config_path.display(),
             auth,
+            debug,
             self.uid
         );
 

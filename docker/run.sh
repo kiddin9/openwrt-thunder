@@ -50,6 +50,6 @@ for dir in ${dir_list[@]}; do
     mount --bind $dir /rootfs$dir
 done
 
-chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /bin/mount -t proc none /proc && /bin/xunlei launch -c /opt/data -d /downloads"
+chroot /rootfs /bin/bash -c "echo 'nameserver 119.29.29.29' > /etc/resolv.conf && /bin/mount -t proc none /proc && /bin/xunlei launcher -c /opt/data -d /downloads"
 
 exec "$@"

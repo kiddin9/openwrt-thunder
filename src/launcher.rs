@@ -34,28 +34,32 @@ pub struct XunleiLauncher {
     auth_password: Option<String>,
     host: std::net::IpAddr,
     port: u16,
+    debug: bool,
     download_path: PathBuf,
     config_path: PathBuf,
     mount_bind_download_path: PathBuf,
 }
 
-impl From<Config> for XunleiLauncher {
-    fn from(config: Config) -> Self {
-        let auth_user = config
+impl From<(bool, Config)> for XunleiLauncher {
+    fn from(value: (bool, Config)) -> Self {
+        let auth_user = value
+            .1
             .auth_user
             .map(|auth_user| hasher_auth_message(auth_user.as_str()));
 
-        let auth_password = config
+        let auth_password = value
+            .1
             .auth_password
             .map(|auth_password| hasher_auth_message(auth_password.as_str()));
         Self {
             auth_user,
             auth_password,
-            host: config.host,
-            port: config.port,
-            download_path: config.download_path,
-            config_path: config.config_path,
-            mount_bind_download_path: config.mount_bind_download_path,
+            host: value.1.host,
+            port: value.1.port,
+            download_path: value.1.download_path,
+            config_path: value.1.config_path,
+            mount_bind_download_path: value.1.mount_bind_download_path,
+            debug: value.0,
         }
     }
 }
@@ -135,6 +139,7 @@ impl Running for XunleiLauncher {
             self.download_path.clone(),
             self.mount_bind_download_path.clone(),
             envs.clone(),
+            self.debug,
         );
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
@@ -144,7 +149,7 @@ impl Running for XunleiLauncher {
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let args = (self, envs);
+        let args = (envs, self.debug, self);
         std::thread::spawn(move || match XunleiPanelServer::from(args).run() {
             Ok(_) => {}
             Err(e) => log::error!("[XunleiPanelServer] error: {}", e),
@@ -168,6 +173,7 @@ struct XunleiBackendServer {
     download_path: PathBuf,
     mount_bind_download_path: PathBuf,
     envs: HashMap<String, String>,
+    debug: bool,
 }
 
 impl XunleiBackendServer {
@@ -231,17 +237,20 @@ impl Running for XunleiBackendServer {
         }
 
         log::info!("[XunleiBackendServer] Start Xunlei Backend Server");
-        let backend_process = std::process::Command::new(env::LAUNCHER_EXE)
-            .args([
-                format!("-launcher_listen={}", env::LAUNCHER_SOCK),
-                format!("-pid={}", env::PID_FILE),
-                format!("-logfile={}", env::LAUNCH_LOG_FILE),
-            ])
-            .current_dir(env::SYNOPKG_PKGDEST)
-            .envs(self.envs)
-            // Join the parent process group by default
-            .spawn()
-            .expect("failed to spawn child process");
+        let mut cmd = std::process::Command::new(env::LAUNCHER_EXE);
+        cmd.args([
+            format!("-launcher_listen={}", env::LAUNCHER_SOCK),
+            format!("-pid={}", env::PID_FILE),
+            format!("-logfile={}", env::LAUNCH_LOG_FILE),
+        ])
+        .current_dir(env::SYNOPKG_PKGDEST)
+        .envs(self.envs);
+        if !self.debug {
+            cmd.stderr(Stdio::null())
+                .stdin(Stdio::null())
+                .stdout(Stdio::null());
+        }
+        let backend_process = cmd.spawn()?;
         let backend_pid = backend_process.id() as libc::pid_t;
         log::info!(
             "[XunleiBackendServer] Xunlei Backend Server PID: {}",
@@ -294,12 +303,13 @@ impl Running for XunleiBackendServer {
     }
 }
 
-impl From<(PathBuf, PathBuf, HashMap<String, String>)> for XunleiBackendServer {
-    fn from(value: (PathBuf, PathBuf, HashMap<String, String>)) -> Self {
+impl From<(PathBuf, PathBuf, HashMap<String, String>, bool)> for XunleiBackendServer {
+    fn from(value: (PathBuf, PathBuf, HashMap<String, String>, bool)) -> Self {
         Self {
             download_path: value.0,
             mount_bind_download_path: value.1,
             envs: value.2,
+            debug: value.3,
         }
     }
 }
@@ -327,6 +337,7 @@ struct XunleiPanelServer {
     host: std::net::IpAddr,
     port: u16,
     envs: HashMap<String, String>,
+    debug: bool,
 }
 
 impl XunleiPanelServer {
@@ -408,8 +419,11 @@ impl XunleiPanelServer {
                 .env("REMOTE_ADDR", request.remote_addr().to_string())
                 .env("SERVER_NAME", request.remote_addr().to_string())
                 .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
                 .stdin(Stdio::piped());
+
+                if !self.debug {
+                    cmd.stderr(Stdio::null());
+                }
 
                 for ele in request.headers() {
                     let k = ele.0.to_uppercase();
@@ -516,15 +530,16 @@ impl Running for XunleiPanelServer {
     }
 }
 
-impl From<(XunleiLauncher, HashMap<String, String>)> for XunleiPanelServer {
-    fn from(value: (XunleiLauncher, HashMap<String, String>)) -> Self {
-        let launch = value.0;
+impl From<(HashMap<String, String>, bool, XunleiLauncher)> for XunleiPanelServer {
+    fn from(value: (HashMap<String, String>, bool, XunleiLauncher)) -> Self {
+        let launcher = value.2;
         Self {
-            auth_user: launch.auth_user.clone(),
-            auth_password: launch.auth_password.clone(),
-            host: launch.host,
-            port: launch.port,
-            envs: value.1,
+            auth_user: launcher.auth_user.clone(),
+            auth_password: launcher.auth_password.clone(),
+            host: launcher.host,
+            port: launcher.port,
+            envs: value.0,
+            debug: value.1,
         }
     }
 }
