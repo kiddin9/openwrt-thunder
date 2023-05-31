@@ -52,18 +52,18 @@ for target in ${target_list[@]}; do
   mv ./* $root/uploads/
   cd -
 
-  # launch feature
-  mkdir -p xunlei-launch-$tag-$target/bin
-  mv bin/* xunlei-launch-$tag-$target/bin/
-  cargo zigbuild --release --target=$target --no-default-features --features launch
+  # launcher feature
+  mkdir -p xunlei-launcher-$tag-$target/bin
+  mv bin/* xunlei-launcher-$tag-$target/bin/
+  cargo zigbuild --release --target=$target --no-default-features --features launcher
   upx --lzma target/$target/release/xunlei
-  mv target/$target/release/xunlei xunlei-launch-$tag-$target/
-  tar -czvf xunlei-launch-$tag-$target.tar.gz xunlei-launch-$tag-$target/*
-  shasum -a 256 xunlei-launch-$tag-$target.tar.gz >xunlei-launch-$tag-$target.tar.gz.sha256
-  mv xunlei-launch-$tag-$target.tar.gz uploads/
-  mv xunlei-launch-$tag-$target.tar.gz.sha256 uploads/
+  mv target/$target/release/xunlei xunlei-launcher-$tag-$target/
+  tar -czvf xunlei-launcher-$tag-$target.tar.gz xunlei-launcher-$tag-$target/*
+  shasum -a 256 xunlei-launcher-$tag-$target.tar.gz >xunlei-launcher-$tag-$target.tar.gz.sha256
+  mv xunlei-launcher-$tag-$target.tar.gz uploads/
+  mv xunlei-launcher-$tag-$target.tar.gz.sha256 uploads/
   
   rm -rf bin
-  rm -rf xunlei-launch-$tag-$target
+  rm -rf xunlei-launcher-$tag-$target
   ls -lah uploads
 done
