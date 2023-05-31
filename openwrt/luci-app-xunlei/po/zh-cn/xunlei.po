@@ -10,6 +10,9 @@ msgstr "<a>NAS 迅雷 DSM 7.x 内测版</a> | <a href=\"https://github.com/gngpp
 msgid "Enabled"
 msgstr "启用"
 
+msgid "Debug"
+msgstr "调试模式"
+
 msgid "RUNNING"
 msgstr "运行中"
 
