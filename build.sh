@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 [ ! -d uploads ] && mkdir uploads
 [ ! -d bin ] && mkdir bin
 
@@ -63,7 +65,6 @@ for target in ${target_list[@]}; do
   mv xunlei-launcher-$tag-$target.tar.gz uploads/
   mv xunlei-launcher-$tag-$target.tar.gz.sha256 uploads/
   
-  rm -rf bin
   rm -rf xunlei-launcher-$tag-$target
   ls -lah uploads
 done

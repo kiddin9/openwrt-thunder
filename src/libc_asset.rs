@@ -14,7 +14,6 @@ struct Asset;
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
     use crate::{env, util};
     use anyhow::Context;
-    use std::ffi::CString;
     use std::ops::Not;
     use std::path::Path;
 
@@ -85,7 +84,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                     return Ok(());
                 }
                 let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
-                nix::unistd::symlinkat(syno_ld_path, None, &sys_ld_path)?;
+                nix::unistd::symlinkat(&syno_ld_path, None, &sys_ld_path)?;
 
                 envs.insert(
                     String::from("LD_LIBRARY_PATH"),
