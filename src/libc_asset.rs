@@ -29,7 +29,7 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
 
     let syno_lib_path = std::path::Path::new(env::SYNOPKG_LIB);
     if !syno_lib_path.exists() {
-        std::fs::create_dir(&syno_lib_path).context(format!(
+        std::fs::create_dir_all(&syno_lib_path).context(format!(
             "[Asset] Failed to create directory: {}",
             syno_lib_path.display()
         ))?;

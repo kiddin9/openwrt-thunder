@@ -43,10 +43,8 @@ start_service() {
 		rm /usr/syno/synoman/webman/modules/authenticate.cgi
 	fi
 
-	if [ -d /var/packages/pan-xunlei-com ]; then
-		mkdir -p /var/packages/pan-xunlei-com
-	fi	
-
+	rm -rf /var/packages/pan-xunlei-com
+	mkdir -p /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 	ln -s /usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
