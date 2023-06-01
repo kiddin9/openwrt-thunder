@@ -68,6 +68,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/share/xunlei
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target
 	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/host
+	$(INSTALL_DIR) $(1)/usr/share/xunlei/target/etc
 	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/usr/share/xunlei/target/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
