@@ -147,7 +147,7 @@ make V=s
 ```
 
 ### FQA
- - openwrt如果启动有问题，先执行`service xunlei disable && service xunlei enable`，清除以前安装过的迅雷包也叫xunlei，会有init.d缓存。不行再开debug模式看日志
+ - openwrt如果启动有问题，先执行`service xunlei disable && service xunlei enable`，清除以前安装过的迅雷包缓存（可能别人打包也叫xunlei，会有init.d缓存），不行再开debug模式看日志，最好新装重启一次
  - 插件依赖bash，系统需要安装bash
  - musl运行库的操作系统，若已存在glibc运行库，那么会优先兼容选择使用操作系统运行库环境（可能会缺依赖，自行补全）
  - 指定运行LD加载库或压缩目前无法做到（二进制带签名），需要逆向打patch
