@@ -6,7 +6,7 @@ set -e
 [ ! -d bin ] && mkdir bin
 
 root=$(pwd)
-target_list=(x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-unknown-linux-gnu aarch64-unknown-linux-musl)
+target_list=(x86_64-unknown-linux-musl aarch64-unknown-linux-musl)
 for target in ${target_list[@]}; do
 
   # default feature
