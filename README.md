@@ -20,6 +20,8 @@ xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpi
 - 支持插件：NAS小星（pcdn），测速插件
 - 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
 
+> 默认Web访问端口5055
+
 ```shell
 ❯ ./xunlei                   
 Synology Nas Thunder runs on Linux
@@ -148,6 +150,6 @@ make V=s
 
 ### FQA
  - openwrt如果启动有问题，先执行`service xunlei disable && service xunlei enable`，清除以前安装过的迅雷包缓存（可能别人打包也叫xunlei，会有init.d缓存），不行再开debug模式看日志，最好新装重启一次
- - 插件依赖bash，系统需要安装bash
- - musl运行库的操作系统，若已存在glibc运行库，那么会优先兼容选择使用操作系统运行库环境（可能会缺依赖，自行补全）
+ - musl运行库的操作系统，若已存在glibc运行库，那么会优先兼容选择使用操作系统运行库环境（避免对系统其他软件依赖冲突，可能会缺依赖，自行补全）
  - 指定运行LD加载库或压缩目前无法做到（二进制带签名），需要逆向打patch
+ - 插件依赖bash，系统需要安装bash
