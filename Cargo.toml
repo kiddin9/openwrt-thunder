@@ -18,7 +18,7 @@ anyhow = "1.0.71"
 rust-embed = "6.7.0"
 nix = { version = "0.26.2", features = ["mount", "signal", "user"]}
 rand = "0.8.5"
-ureq = "2.7.0"
+ureq = "2.7.1"
 sha3 = "0.10.8"
 indicatif = "0.17.5"
 rouille= "3.6.2"
