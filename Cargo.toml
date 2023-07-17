@@ -22,7 +22,7 @@ ureq = "2.7.1"
 sha3 = "0.10.8"
 indicatif = "0.17.5"
 rouille= "3.6.2"
-signal-hook = "0.3.15"
+signal-hook = "0.3.16"
 clap = { version = "4.3.11", features = ["derive", "env"] }
 
 [features]
