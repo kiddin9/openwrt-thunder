@@ -14,7 +14,7 @@ readme = "README.md"
 log = "0.4.19"
 env_logger = "0.10.0"
 chrono = "0.4.26"
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 rust-embed = "6.8.1"
 nix = { version = "0.26.2", features = ["mount", "signal", "user"]}
 rand = "0.8.5"
