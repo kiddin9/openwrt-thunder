@@ -1622,7 +1622,7 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "xunlei"
-version = "3.8.0-25"
+version = "3.8.0-26"
 dependencies = [
  "anyhow",
  "chrono",
