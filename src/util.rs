@@ -28,6 +28,27 @@ pub fn chown(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn recursive_chown(path: &Path, uid: u32, gid: u32) {
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let dir_path = entry.path();
+
+                chown(&dir_path, uid, gid).expect(&format!(
+                    "Failed to chown: {}, PUID:{}, GUID:{}",
+                    dir_path.display(),
+                    uid,
+                    gid
+                ));
+
+                if entry.file_type().unwrap().is_dir() {
+                    recursive_chown(&dir_path, uid, gid);
+                }
+            }
+        }
+    }
+}
+
 pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyhow::Result<()> {
     let mut target_file = std::fs::File::create(target_path)?;
     target_file

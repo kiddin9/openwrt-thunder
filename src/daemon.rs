@@ -113,20 +113,6 @@ impl XunleiInstall {
             ))?;
         }
 
-        util::chown(&base_dir, self.uid, self.gid).context(format!(
-            "Failed to set permission: {}, PUID:{}, GUID:{}",
-            base_dir.display(),
-            self.uid,
-            self.gid
-        ))?;
-
-        util::chown(&target_dir, self.uid, self.gid).context(format!(
-            "Failed to set permission: {}, PUID:{}, GUID:{}",
-            target_dir.display(),
-            self.uid,
-            self.gid
-        ))?;
-
         // path: /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
         let synoinfo_path = PathBuf::from(format!("{}{}", host_dir.display(), env::SYNO_INFO_PATH));
         util::create_dir_all(
@@ -192,6 +178,14 @@ impl XunleiInstall {
                 target_syno_authenticate_path.display()
             ))?;
 
+        util::recursive_chown(&base_dir, self.uid, self.gid);
+
+        log::info!(
+            "[XunleiInstall] chown: {}, UID:{}, GID:{}",
+            target_dir.display(),
+            self.uid,
+            self.gid
+        );
         log::info!("[XunleiInstall] Installation completed");
         Ok(std::env::current_exe()?)
     }

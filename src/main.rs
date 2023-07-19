@@ -61,10 +61,10 @@ pub struct Config {
     #[clap(short = 'P', long, env = "XUNLEI_PORT", default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
     /// Xunlei UID permission
-    #[clap(short = 'U', long, env = "XUNLEI_UID")]
+    #[clap(long, env = "XUNLEI_UID")]
     uid: Option<u32>,
     /// Xunlei GID permission
-    #[clap(short = 'G', long, env = "XUNLEI_GID")]
+    #[clap(long, env = "XUNLEI_GID")]
     gid: Option<u32>,
     /// Xunlei config directory
     #[clap(short, long, default_value = env::DEFAULT_CONFIG_PATH)]
