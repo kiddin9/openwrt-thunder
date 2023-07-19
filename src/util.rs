@@ -22,7 +22,7 @@ fn set_dir_permission(path: &Path, permission: u32) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn set_permissions(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
+pub fn chown(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
     nix::unistd::chown(target_path, Some(uid.into()), Some(gid.into()))
         .context(format!("chown {} error", target_path.display()))?;
     Ok(())
@@ -40,7 +40,7 @@ pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyho
             mode
         ),
     )?;
-
+    drop(target_file);
     Ok(())
 }
 

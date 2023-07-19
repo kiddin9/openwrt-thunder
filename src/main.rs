@@ -55,11 +55,17 @@ pub struct Config {
     #[arg(short = 'W', long, env = "XUNLEI_AUTH_PASSWORD")]
     auth_password: Option<String>,
     /// Xunlei Listen host
-    #[clap(short = 'H', long, default_value = "0.0.0.0", value_parser = parser_host)]
+    #[clap(short = 'H', long, env = "XUNLEI_HOST", default_value = "0.0.0.0", value_parser = parser_host)]
     host: std::net::IpAddr,
     /// Xunlei Listen port
-    #[clap(short = 'P', long, default_value = "5055", value_parser = parser_port_in_range)]
+    #[clap(short = 'P', long, env = "XUNLEI_PORT", default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
+    /// Xunlei UID permission
+    #[clap(short = 'U', long, env = "XUNLEI_UID")]
+    uid: Option<u32>,
+    /// Xunlei GID permission
+    #[clap(short = 'G', long, env = "XUNLEI_GID")]
+    gid: Option<u32>,
     /// Xunlei config directory
     #[clap(short, long, default_value = env::DEFAULT_CONFIG_PATH)]
     config_path: PathBuf,

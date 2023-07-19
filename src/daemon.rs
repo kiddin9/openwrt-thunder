@@ -22,6 +22,7 @@ pub struct XunleiInstall {
     port: u16,
     debug: bool,
     download_path: PathBuf,
+    mount_bind_download_path: PathBuf,
     config_path: PathBuf,
     uid: u32,
     gid: u32,
@@ -34,9 +35,10 @@ impl From<(bool, Config)> for XunleiInstall {
             host: value.1.host,
             port: value.1.port,
             download_path: value.1.download_path,
+            mount_bind_download_path: value.1.mount_bind_download_path,
             config_path: value.1.config_path,
-            uid: nix::unistd::getuid().into(),
-            gid: nix::unistd::getgid().into(),
+            uid: value.1.uid.unwrap_or(nix::unistd::getuid().into()),
+            gid: value.1.gid.unwrap_or(nix::unistd::getgid().into()),
             auth_user: value.1.auth_user,
             auth_password: value.1.auth_password,
             debug: value.0,
@@ -49,14 +51,27 @@ impl XunleiInstall {
         log::info!("[XunleiInstall] Configuration in progress");
         log::info!("[XunleiInstall] WebUI port: {}", self.port);
 
+        // the real store download path
         if self.download_path.is_dir().not() {
-            std::fs::create_dir_all(&self.download_path)?;
+            util::create_dir_all(&self.download_path, 0o755)?;
+            util::chown(&self.download_path, self.uid, self.gid)?;
         } else if self.download_path.is_file() {
-            return Err(anyhow::anyhow!("Download path must be a directory"));
+            return Err(anyhow::anyhow!("download path must be a directory"));
+        }
+
+        // mount bind downloads directory
+        if self.mount_bind_download_path.is_dir().not() {
+            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
+            util::chown(&self.mount_bind_download_path, self.uid, self.gid)?;
+        } else if self.mount_bind_download_path.is_file() {
+            return Err(anyhow::anyhow!(
+                "mount bind download path must be a directory"
+            ));
         }
 
         if self.config_path.is_dir().not() {
             std::fs::create_dir_all(&self.config_path)?;
+            util::chown(&self.config_path, self.uid, self.gid)?;
         } else if self.config_path.is_file() {
             return Err(anyhow::anyhow!("Config path must be a directory"));
         }
@@ -90,16 +105,22 @@ impl XunleiInstall {
             let data = xunlei.get(filename).context("Read data failure")?;
             util::write_file(&target_filepath, data, 0o755)?;
             log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
+            util::chown(&target_filepath, self.uid, self.gid).context(format!(
+                "Failed to set permission: {}, UID:{}, UID:{}",
+                base_dir.display(),
+                self.uid,
+                self.gid
+            ))?;
         }
 
-        util::set_permissions(&base_dir, self.uid, self.gid).context(format!(
+        util::chown(&base_dir, self.uid, self.gid).context(format!(
             "Failed to set permission: {}, PUID:{}, GUID:{}",
             base_dir.display(),
             self.uid,
             self.gid
         ))?;
 
-        util::set_permissions(&target_dir, self.uid, self.gid).context(format!(
+        util::chown(&target_dir, self.uid, self.gid).context(format!(
             "Failed to set permission: {}, PUID:{}, GUID:{}",
             target_dir.display(),
             self.uid,
@@ -206,6 +227,7 @@ impl XunleiInstall {
                 LimitNOFILE=2048
                 LimitNPROC=1024
                 User={}
+                Group={}
                 
                 [Install]
                 WantedBy=multi-user.target"#,
@@ -217,7 +239,8 @@ impl XunleiInstall {
             self.config_path.display(),
             auth,
             debug,
-            self.uid
+            self.uid,
+            self.gid
         );
 
         util::write_file(
