@@ -222,8 +222,6 @@ impl XunleiInstall {
                 [Service]
                 Type=simple
                 ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {auth} {debug} {uid} {gid}
-                LimitNOFILE=2048
-                LimitNPROC=1024
                 User=root
                 Group=root
                 
