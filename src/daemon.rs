@@ -51,10 +51,17 @@ impl XunleiInstall {
         log::info!("[XunleiInstall] Configuration in progress");
         log::info!("[XunleiInstall] WebUI port: {}", self.port);
 
+        if self.config_path.is_dir().not() {
+            std::fs::create_dir_all(&self.config_path)?;
+            util::recursive_chown(&&self.config_path, self.uid, self.gid);
+        } else if self.config_path.is_file() {
+            return Err(anyhow::anyhow!("Config path must be a directory"));
+        }
+
         // the real store download path
         if self.download_path.is_dir().not() {
             util::create_dir_all(&self.download_path, 0o755)?;
-            util::chown(&self.download_path, self.uid, self.gid)?;
+            util::recursive_chown(&&self.download_path, self.uid, self.gid);
         } else if self.download_path.is_file() {
             return Err(anyhow::anyhow!("download path must be a directory"));
         }
@@ -62,19 +69,13 @@ impl XunleiInstall {
         // mount bind downloads directory
         if self.mount_bind_download_path.is_dir().not() {
             util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
-            util::chown(&self.mount_bind_download_path, self.uid, self.gid)?;
+            util::recursive_chown(&&self.mount_bind_download_path, self.uid, self.gid);
         } else if self.mount_bind_download_path.is_file() {
             return Err(anyhow::anyhow!(
                 "mount bind download path must be a directory"
             ));
         }
 
-        if self.config_path.is_dir().not() {
-            std::fs::create_dir_all(&self.config_path)?;
-            util::chown(&self.config_path, self.uid, self.gid)?;
-        } else if self.config_path.is_file() {
-            return Err(anyhow::anyhow!("Config path must be a directory"));
-        }
         log::info!(
             "[XunleiInstall] Config directory: {}",
             self.config_path.display()
@@ -209,6 +210,9 @@ impl XunleiInstall {
             false => "",
         };
 
+        let uid = format!("--uid {}", &self.uid);
+        let gid = format!("--gid {}", &self.gid);
+
         let systemctl_unit = format!(
             r#"[Unit]
                 Description={}
@@ -217,11 +221,11 @@ impl XunleiInstall {
                 
                 [Service]
                 Type=simple
-                ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {} {}
+                ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {auth} {debug} {uid} {gid}
                 LimitNOFILE=2048
                 LimitNPROC=1024
-                User={}
-                Group={}
+                User=root
+                Group=root
                 
                 [Install]
                 WantedBy=multi-user.target"#,
@@ -231,10 +235,6 @@ impl XunleiInstall {
             self.port,
             self.download_path.display(),
             self.config_path.display(),
-            auth,
-            debug,
-            self.uid,
-            self.gid
         );
 
         util::write_file(

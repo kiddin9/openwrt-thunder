@@ -5,6 +5,7 @@ use rouille::Request;
 use rouille::Response;
 use std::collections::HashMap;
 use std::io;
+use std::os::unix::process::CommandExt;
 use std::sync::Mutex;
 
 use anyhow::Context;
@@ -40,6 +41,8 @@ pub struct XunleiLauncher {
     download_path: PathBuf,
     config_path: PathBuf,
     mount_bind_download_path: PathBuf,
+    uid: u32,
+    gid: u32,
 }
 
 impl From<(bool, Config)> for XunleiLauncher {
@@ -62,6 +65,8 @@ impl From<(bool, Config)> for XunleiLauncher {
             config_path: value.1.config_path,
             mount_bind_download_path: value.1.mount_bind_download_path,
             debug: value.0,
+            uid: value.1.uid.unwrap_or(nix::unistd::getuid().into()),
+            gid: value.1.gid.unwrap_or(nix::unistd::getgid().into()),
         }
     }
 }
@@ -135,14 +140,7 @@ impl Running for XunleiLauncher {
     fn run(self) -> anyhow::Result<()> {
         use std::thread::{Builder, JoinHandle};
 
-        let envs = self.envs()?;
-
-        let args = (
-            self.download_path.clone(),
-            self.mount_bind_download_path.clone(),
-            envs.clone(),
-            self.debug,
-        );
+        let args = self.clone();
         let backend_thread: JoinHandle<_> = Builder::new()
             .name("backend".to_string())
             .spawn(move || match XunleiBackendServer::from(args).run() {
@@ -151,7 +149,7 @@ impl Running for XunleiLauncher {
             })
             .expect("[XunleiLauncher] Failed to start backend thread");
 
-        let args = (envs, self.debug, self);
+        let args = self;
         std::thread::spawn(move || match XunleiPanelServer::from(args).run() {
             Ok(_) => {}
             Err(e) => log::error!("[XunleiPanelServer] error: {}", e),
@@ -171,6 +169,22 @@ struct XunleiBackendServer {
     mount_bind_download_path: PathBuf,
     envs: HashMap<String, String>,
     debug: bool,
+    uid: u32,
+    gid: u32,
+}
+
+impl From<XunleiLauncher> for XunleiBackendServer {
+    fn from(launcher: XunleiLauncher) -> Self {
+        let envs = launcher.envs().unwrap();
+        Self {
+            download_path: launcher.download_path,
+            mount_bind_download_path: launcher.mount_bind_download_path,
+            envs,
+            debug: launcher.debug,
+            uid: launcher.uid,
+            gid: launcher.gid,
+        }
+    }
 }
 
 impl Running for XunleiBackendServer {
@@ -178,16 +192,7 @@ impl Running for XunleiBackendServer {
         let var_path = Path::new(env::SYNOPKG_VAR);
         if var_path.exists().not() {
             util::create_dir_all(var_path, 0o777)?;
-        }
-
-        // mount bind downloads directory
-        if self.mount_bind_download_path.exists().not() {
-            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
-        }
-
-        // the real store download path
-        if self.download_path.exists().not() {
-            util::create_dir_all(&self.download_path, 0o755)?;
+            util::chown(var_path, 1000, 1000)?;
         }
 
         let _ = nix::mount::umount(&self.mount_bind_download_path);
@@ -222,6 +227,8 @@ impl Running for XunleiBackendServer {
             format!("-logfile={}", env::LAUNCH_LOG_FILE),
         ])
         .current_dir(env::SYNOPKG_PKGDEST)
+        .uid(self.uid)
+        .gid(self.gid)
         .envs(self.envs);
         if !self.debug {
             cmd.stderr(Stdio::null())
@@ -289,17 +296,6 @@ impl Running for XunleiBackendServer {
     }
 }
 
-impl From<(PathBuf, PathBuf, HashMap<String, String>, bool)> for XunleiBackendServer {
-    fn from(value: (PathBuf, PathBuf, HashMap<String, String>, bool)) -> Self {
-        Self {
-            download_path: value.0,
-            mount_bind_download_path: value.1,
-            envs: value.2,
-            debug: value.3,
-        }
-    }
-}
-
 // This struct contains the data that we store on the server about each client.
 #[derive(Debug, Clone)]
 struct Session;
@@ -324,6 +320,8 @@ struct XunleiPanelServer {
     port: u16,
     envs: HashMap<String, String>,
     debug: bool,
+    uid: u32,
+    gid: u32,
 }
 
 impl XunleiPanelServer {
@@ -404,6 +402,8 @@ impl XunleiPanelServer {
                 .env("SERVER_PORT", self.port.to_string())
                 .env("REMOTE_ADDR", request.remote_addr().to_string())
                 .env("SERVER_NAME", request.remote_addr().to_string())
+                .uid(self.uid)
+                .gid(self.gid)
                 .stdout(Stdio::piped())
                 .stdin(Stdio::piped());
 
@@ -516,16 +516,18 @@ impl Running for XunleiPanelServer {
     }
 }
 
-impl From<(HashMap<String, String>, bool, XunleiLauncher)> for XunleiPanelServer {
-    fn from(value: (HashMap<String, String>, bool, XunleiLauncher)) -> Self {
-        let launcher = value.2;
+impl From<XunleiLauncher> for XunleiPanelServer {
+    fn from(launcher: XunleiLauncher) -> Self {
+        let envs = launcher.envs().unwrap();
         Self {
             auth_user: launcher.auth_user.clone(),
             auth_password: launcher.auth_password.clone(),
             host: launcher.host,
             port: launcher.port,
-            envs: value.0,
-            debug: value.1,
+            envs,
+            debug: launcher.debug,
+            uid: launcher.uid,
+            gid: launcher.gid,
         }
     }
 }

@@ -29,6 +29,12 @@ pub fn chown(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
 }
 
 pub fn recursive_chown(path: &Path, uid: u32, gid: u32) {
+    chown(&path, uid, gid).expect(&format!(
+        "Failed to chown: {}, PUID:{}, GUID:{}",
+        path.display(),
+        uid,
+        gid
+    ));
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries {
             if let Ok(entry) = entry {
