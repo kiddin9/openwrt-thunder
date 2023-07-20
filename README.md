@@ -16,6 +16,7 @@ xunlei从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alpi
 - 支持glibc/musl
 - 支持更改下载目录
 - 支持面板认证
+- 支持以特定用户安装(UID/GID)
 - Docker镜像最小压缩（40MB左右）
 - 支持插件：NAS小星（pcdn），测速插件
 - 内侧邀请码（3H9F7Y6D/迅雷牛通），内侧码申请快速通道：https://t.cn/A6fhraWZ
@@ -50,6 +51,8 @@ Options:
   -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
   -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
   -p, --port <PORT>                    Xunlei Listen port [default: 5055]
+  --uid <UID> Xunlei UID permission    [env: XUNLEI_UID=]
+  --gid <GID> Xunlei GID permission    [env: XUNLEI_GID=]
   -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
   -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
   -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH> Xunlei mount bind download directory [default: /xunlei]
