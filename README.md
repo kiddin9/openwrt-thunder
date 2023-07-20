@@ -79,6 +79,8 @@ Options:
   -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
   -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
   -p, --port <PORT>                    Xunlei Listen port [default: 5055]
+  --uid <UID> Xunlei UID permission    [env: XUNLEI_UID=]
+  --gid <GID> Xunlei GID permission    [env: XUNLEI_GID=]
   -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
   -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
   -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH> Xunlei mount bind download directory [default: /xunlei]
