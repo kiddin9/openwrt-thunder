@@ -47,8 +47,8 @@ RUN mkdir -p /rootfs/bin /rootfs/run \
     /rootfs/sys /rootfs/dev \
     /rootfs/var /rootfs/tmp \
     /rootfs/root /rootfs/boot \
-    /rootfs/opt/data /rootfs/downloads \
-    /opt/data /downloads
+    /rootfs/opt/data /rootfs/downloads /rootfs/xunlei \
+    /opt/data /downloads /xunlei
 
 VOLUME [ "/opt/data", "/downloads" ]
 ENTRYPOINT ["/bin/bash", "+x", "/bin/run.sh"]
