@@ -90,9 +90,9 @@ Options:
 ### Ubuntu(Other Linux)
 GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
 ```shell
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-28/xunlei-embed-3.11.2-28-aarch64-unknown-linux-gnu.deb
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-29/xunlei-embed-3.11.2-29-aarch64-unknown-linux-gnu.deb
 
-dpkg -i xunlei_3.11.2-28_amd64.deb
+dpkg -i xunlei_3.11.2-29_amd64.deb
 
 # 安装和运行迅雷程序
 xunlei install
@@ -117,11 +117,11 @@ docker run -it --rm --privileged -p 5055:5055 --name=xunlei \
 GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，下载后使用 opkg 安装，以 nanopi r4s 为例：
 
 ```shell
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-28/xunlei_3.11.2-28_aarch64_generic.ipk
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-28/luci-app-xunlei_1.0.1-7-1_all.ipk
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-28/luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-29/xunlei_3.11.2-29_aarch64_generic.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-29/luci-app-xunlei_1.0.1-7-1_all.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-29/luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
 
-opkg install xunlei_3.11.2-28_aarch64_generic.ipk
+opkg install xunlei_3.11.2-29_aarch64_generic.ipk
 opkg install luci-app-xunlei_1.0.1-7-1_all.ipk
 opkg install luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
 ```
