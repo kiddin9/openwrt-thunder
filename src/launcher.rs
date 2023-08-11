@@ -192,7 +192,7 @@ impl Running for XunleiBackendServer {
         let var_path = Path::new(env::SYNOPKG_VAR);
         if var_path.exists().not() {
             util::create_dir_all(var_path, 0o777)?;
-            util::chown(var_path, 1000, 1000)?;
+            util::chown(var_path, self.uid, self.gid)?;
         }
 
         let _ = nix::mount::umount(&self.mount_bind_download_path);
