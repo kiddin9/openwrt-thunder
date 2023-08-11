@@ -13,7 +13,6 @@ for target in ${target_list[@]}; do
   cargo zigbuild --release --target=$target
   upx --lzma target/$target/release/xunlei
   cargo deb --target=$target --no-build --no-strip
-  cargo generate-rpm --target=$target --payload-compress none
   cd target/$target/release
   tar czvf xunlei-$tag-$target.tar.gz xunlei
   shasum -a 256 xunlei-$tag-$target.tar.gz >xunlei-$tag-$target.tar.gz.sha256
@@ -22,10 +21,6 @@ for target in ${target_list[@]}; do
   cd -
   cd target/$target/debian
   rename 's/.*/xunlei-'$tag'-'$target'.deb/' *.deb
-  mv ./* $root/uploads/
-  cd -
-  cd target/$target/generate-rpm
-  rename 's/.*/xunlei-'$tag'-'$target'.rpm/' xunlei*.rpm
   mv ./* $root/uploads/
   cd -
 
@@ -38,7 +33,6 @@ for target in ${target_list[@]}; do
   cargo zigbuild --release --target=$target --no-default-features --features embed
   upx --lzma target/$target/release/xunlei
   cargo deb --target=$target --no-build --no-strip
-  cargo generate-rpm --target=$target --payload-compress none
   cd target/$target/release
   tar czvf xunlei-embed-$tag-$target.tar.gz xunlei
   shasum -a 256 xunlei-embed-$tag-$target.tar.gz >xunlei-embed-$tag-$target.tar.gz.sha256
@@ -47,10 +41,6 @@ for target in ${target_list[@]}; do
   cd -
   cd target/$target/debian
   rename 's/.*/xunlei-embed-'$tag'-'$target'.deb/' *.deb
-  mv ./* $root/uploads/
-  cd -
-  cd target/$target/generate-rpm
-  rename 's/.*/xunlei-embed-'$tag'-'$target'.rpm/' xunlei*.rpm
   mv ./* $root/uploads/
   cd -
 
