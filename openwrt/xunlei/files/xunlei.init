@@ -48,6 +48,19 @@ start_service() {
 	ln -s /usr/share/xunlei/target /var/packages/pan-xunlei-com
 	ln -s /usr/share/xunlei/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 	ln -s /usr/share/xunlei/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
+
+	if [ ! -d "$config_path" ]; then
+		mkdir -p $config_path
+	fi
+
+	if [ ! -d "$download_path" ]; then
+		mkdir -p $download_path
+	fi
+
+	if [ ! -d "$mount_bind_download_path" ]; then
+		mkdir -p $mount_bind_download_path
+	fi
+	
 	args="--host $host --port $port --config-path $config_path --download-path $download_path --mount-bind-download-path $mount_bind_download_path"
 
 	if [ -n "$auth_user" ] && [ -n "$auth_password" ]; then
