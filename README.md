@@ -69,33 +69,6 @@ Options:
   -h, --help
           Print help
 
-❯ ./xunlei uninstall --help
-Uninstall xunlei
-
-Usage: xunlei uninstall [OPTIONS]
-
-Options:
-      --debug  Enable debug
-  -c, --clear  Clear xunlei default config directory
-  -h, --help   Print help
-
-❯ ./xunlei launcher --help 
-Launcher xunlei
-
-Usage: xunlei launcher [OPTIONS]
-
-Options:
-      --debug                          Enable debug
-  -U, --auth-user <AUTH_USER>          Xunlei authentication username
-  -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
-  -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
-  -p, --port <PORT>                    Xunlei Listen port [default: 5055]
-  --uid <UID> Xunlei UID permission    [env: XUNLEI_UID=]
-  --gid <GID> Xunlei GID permission    [env: XUNLEI_GID=]
-  -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
-  -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
-  -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH> Xunlei mount bind download directory [default: /xunlei]
-  -h, --help                           Print help
 ```
 
 ### Ubuntu(Other Linux)
