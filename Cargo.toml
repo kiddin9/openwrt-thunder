@@ -1,6 +1,6 @@
 [package]
 name = "xunlei"
-version = "3.11.2-30"
+version = "3.11.2-31"
 edition = "2021"
 description = "Synology Nas Thunder runs on Linux"
 license = "MIT"

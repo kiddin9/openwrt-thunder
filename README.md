@@ -46,17 +46,28 @@ Install xunlei
 Usage: xunlei install [OPTIONS]
 
 Options:
-      --debug                          Enable debug
-  -U, --auth-user <AUTH_USER>          Xunlei authentication username
-  -W, --auth-password <AUTH_PASSWORD>  Xunlei authentication password
-  -h, --host <HOST>                    Xunlei Listen host [default: 0.0.0.0]
-  -p, --port <PORT>                    Xunlei Listen port [default: 5055]
-  --uid <UID> Xunlei UID permission    [env: XUNLEI_UID=]
-  --gid <GID> Xunlei GID permission    [env: XUNLEI_GID=]
-  -c, --config-path <CONFIG_PATH>      Xunlei config directory [default: /opt/xunlei]
-  -d, --download-path <DOWNLOAD_PATH>  Xunlei download directory [default: /opt/xunlei/downloads]
-  -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH> Xunlei mount bind download directory [default: /xunlei]
-  -h, --help                           Print help
+      --debug
+          Enable debug [env: XUNLEI_DEBUG=]
+  -u, --auth-user <AUTH_USER>
+          Xunlei authentication username [env: XUNLEI_AUTH_USER=]
+  -w, --auth-password <AUTH_PASSWORD>
+          Xunlei authentication password [env: XUNLEI_AUTH_PASSWORD=]
+  -H, --host <HOST>
+          Xunlei Listen host [env: XUNLEI_HOST=] [default: 0.0.0.0]
+  -P, --port <PORT>
+          Xunlei Listen port [env: XUNLEI_PORT=] [default: 5055]
+  -U, --uid <UID>
+          Xunlei UID permission [env: XUNLEI_UID=]
+  -G, --gid <GID>
+          Xunlei GID permission [env: XUNLEI_GID=]
+  -c, --config-path <CONFIG_PATH>
+          Xunlei config directory [default: /opt/xunlei]
+  -d, --download-path <DOWNLOAD_PATH>
+          Xunlei download directory [default: /opt/xunlei/downloads]
+  -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH>
+          Xunlei mount bind download directory [default: /xunlei]
+  -h, --help
+          Print help
 
 ❯ ./xunlei uninstall --help
 Uninstall xunlei
@@ -90,9 +101,9 @@ Options:
 ### Ubuntu(Other Linux)
 GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
 ```shell
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-30/xunlei-embed-3.11.2-30-aarch64-unknown-linux-gnu.deb
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-31/xunlei-embed-3.11.2-31-aarch64-unknown-linux-gnu.deb
 
-dpkg -i xunlei_3.11.2-30_amd64.deb
+dpkg -i xunlei_3.11.2-31_amd64.deb
 
 # 安装和运行迅雷程序
 xunlei install
@@ -117,11 +128,11 @@ docker run -it --rm --privileged -p 5055:5055 --name=xunlei \
 GitHub [Releases](https://github.com/gngpp/xunlei/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，下载后使用 opkg 安装，以 nanopi r4s 为例：
 
 ```shell
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-30/xunlei_3.11.2-30_aarch64_generic.ipk
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-30/luci-app-xunlei_1.0.1-7-1_all.ipk
-wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-30/luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-31/xunlei_3.11.2-31_aarch64_generic.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-31/luci-app-xunlei_1.0.1-7-1_all.ipk
+wget https://github.com/gngpp/xunlei/releases/download/v3.11.2-31/luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
 
-opkg install xunlei_3.11.2-30_aarch64_generic.ipk
+opkg install xunlei_3.11.2-31_aarch64_generic.ipk
 opkg install luci-app-xunlei_1.0.1-7-1_all.ipk
 opkg install luci-i18n-xunlei-zh-cn_1.0.1-7-1_all.ipk
 ```
