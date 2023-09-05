@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install cargo packages
-        run: cargo install cargo-deb cargo-generate-rpm
+        run: cargo install cargo-deb
 
       - name: Install depends
         run: |
