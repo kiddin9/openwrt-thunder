@@ -64,7 +64,7 @@ start_service() {
 	args="--host $host --port $port --config-path $config_path --download-path $download_path --mount-bind-download-path $mount_bind_download_path"
 
 	if [ -n "$auth_user" ] && [ -n "$auth_password" ]; then
-		args="$args -U $auth_user -W $auth_password"
+		args="$args --auth-user $auth_user --auth-password $auth_password"
 	fi
 
 	if [ $debug -ne 0 ]; then 
