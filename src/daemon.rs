@@ -198,7 +198,7 @@ impl XunleiInstall {
 
         let auth = match self.auth_user.is_some() && self.auth_password.is_some() {
             true => format!(
-                "-U {} -W {}",
+                "--auth-user {} --auth-password {}",
                 self.auth_user.clone().unwrap_or_default(),
                 self.auth_password.clone().unwrap_or_default()
             ),
