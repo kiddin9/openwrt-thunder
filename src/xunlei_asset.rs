@@ -1,5 +1,5 @@
 use core::str;
-use std::borrow::Cow;
+use std::{borrow::Cow, fs::File, io::Read, path::Path};
 
 #[cfg(not(feature = "embed"))]
 use std::{io::Write, ops::Not, path::PathBuf};
@@ -17,8 +17,11 @@ pub trait XunleiAsset {
 #[folder = "bin/"]
 struct Asset;
 
+use anyhow::Context;
 #[cfg(feature = "embed")]
 use anyhow::Context;
+use tar::Archive;
+
 
 #[cfg(feature = "embed")]
 struct XunleiEmbedAsset;
@@ -57,14 +60,11 @@ impl XunleiLocalAsset {
             tmp_path: PathBuf::from("/tmp/xunlei_bin"),
             filename: format!("nasxunlei-DSM7-{}.spk", crate::env::SUPPORT_ARCH),
         };
-        let status = xunlei.exestrct_package()?;
-        if status.success().not() {
-            log::error!("[XunleiLocalAsset] There was an error extracting the download package")
-        }
+        xunlei.exestrct_package()?;
         Ok(xunlei)
     }
 
-    fn exestrct_package(&self) -> anyhow::Result<std::process::ExitStatus> {
+    fn exestrct_package(&self) -> anyhow::Result<()> {
         let response =
             ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename)).call()?;
 
@@ -98,21 +98,79 @@ impl XunleiLocalAsset {
         output_file.flush()?;
         drop(output_file);
 
-        let dir = self.tmp_path.display();
-        let filename = self.filename.as_str();
-        Ok(std::process::Command::new("sh")
-                .arg("-c")
-                .arg(format!("tar --wildcards -Oxf $(find {dir} -type f -name {filename} | head -n1) package.tgz | tar --wildcards -xJC {dir} 'bin/bin/*' 'ui/index.cgi' &&
-                    mv {dir}/bin/bin/* {dir}/ &&
-                    mv {dir}/ui/index.cgi {dir}/xunlei-pan-cli-web &&
-                    rm -rf {dir}/bin/bin &&
-                    rm -rf {dir}/bin &&
-                    rm -rf {dir}/ui &&
-                    rm -f {dir}/version_code {dir}/{filename}
-                "))
-                .spawn()?
-                .wait()?
-            )
+        Self::decompressor(self.tmp_path.as_path(), &self.filename)
+            .context("[XunleiLocalAsset] There was an error extracting the download package")
+    }
+
+    fn copy_write(mut src: impl Read, dest: &mut File) -> anyhow::Result<()> {
+        let mut buffer = [0; 1024];
+
+        loop {
+            match src.read(&mut buffer)? {
+                0 => break,
+                n => dest.write_all(&buffer[..n])?,
+            };
+        }
+        Ok(())
+    }
+
+    fn decompressor(dir: impl AsRef<Path>, filename: &str) -> anyhow::Result<()> {
+        const PACKAGE_XZ: &str = "package.tgz";
+        const PACKAGE_TAR: &str = "package.tar";
+
+        let archive_path = PathBuf::from(dir.as_ref()).join(filename);
+        let xz_path = PathBuf::from(dir.as_ref()).join(PACKAGE_XZ);
+        let tar_path = PathBuf::from(dir.as_ref()).join(PACKAGE_TAR);
+
+        let archive_file = File::open(&archive_path)
+            .context(format!("file {} not found", archive_path.display()))?;
+        let mut archive = Archive::new(archive_file);
+        let mut xz_file = std::fs::File::create(&xz_path)?;
+        for file in archive.entries()? {
+            // Make sure there wasn't an I/O error
+            let file = file?;
+            if format!("{}", file.path()?.display()).contains(PACKAGE_XZ) {
+                Self::copy_write(file, &mut xz_file)?;
+                break;
+            }
+        }
+
+        xz_file.flush()?;
+        drop(xz_file);
+
+        let tgz_file = std::fs::read(&xz_path)?;
+        let decompressor = xz::read::XzDecoder::new(tgz_file.as_slice());
+
+        let mut tar_file = std::fs::File::create(&tar_path)?;
+        Self::copy_write(decompressor, &mut tar_file)?;
+
+        tar_file.flush()?;
+        drop(tar_file);
+        std::fs::remove_file(&xz_path)?;
+
+        let tar_file = std::fs::File::open(&tar_path)?;
+        let mut archive = Archive::new(tar_file);
+        for file in archive.entries()? {
+            let file = file?;
+            let path = format!("{}", file.path()?.display());
+
+            if path.contains("bin/bin/version") && !path.contains("version_code")
+            || path.contains("bin/bin/xunlei-pan-cli-launcher")
+            || path.contains("bin/bin/xunlei-pan-cli")
+        {
+            let filename = path.trim_start_matches("bin/bin/");
+            let filepath = PathBuf::from(dir.as_ref()).join(filename);
+            let mut target = File::create(filepath)?;
+            Self::copy_write(file, &mut target)?;
+        } else if path.contains("ui/index.cgi") {
+            let mut target = File::create(PathBuf::from(dir.as_ref()).join("xunlei-pan-cli-web"))?;
+            Self::copy_write(file, &mut target)?;
+        }
+        }
+
+        std::fs::remove_file(tar_path)?;
+        std::fs::remove_file(archive_path)?;
+        Ok(())
     }
 }
 

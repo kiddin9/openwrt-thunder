@@ -24,6 +24,13 @@ indicatif = "0.17.6"
 rouille= "3.6.2"
 signal-hook = "0.3.17"
 clap = { version = "4.4.2", features = ["derive", "env"] }
+tar = "0.4.40"
+libflate = "2.0.0"
+core2 = "0.4.0"
+xz= "0.1.0"
+
+[target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), target_env = "musl"))'.dependencies]
+tikv-jemallocator = "0.5.4"
 
 [features]
 default = ["launcher", "daemon"]
