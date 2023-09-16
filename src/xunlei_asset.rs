@@ -22,7 +22,6 @@ use anyhow::Context;
 use anyhow::Context;
 use tar::Archive;
 
-
 #[cfg(feature = "embed")]
 struct XunleiEmbedAsset;
 
@@ -155,17 +154,18 @@ impl XunleiLocalAsset {
             let path = format!("{}", file.path()?.display());
 
             if path.contains("bin/bin/version") && !path.contains("version_code")
-            || path.contains("bin/bin/xunlei-pan-cli-launcher")
-            || path.contains("bin/bin/xunlei-pan-cli")
-        {
-            let filename = path.trim_start_matches("bin/bin/");
-            let filepath = PathBuf::from(dir.as_ref()).join(filename);
-            let mut target = File::create(filepath)?;
-            Self::copy_write(file, &mut target)?;
-        } else if path.contains("ui/index.cgi") {
-            let mut target = File::create(PathBuf::from(dir.as_ref()).join("xunlei-pan-cli-web"))?;
-            Self::copy_write(file, &mut target)?;
-        }
+                || path.contains("bin/bin/xunlei-pan-cli-launcher")
+                || path.contains("bin/bin/xunlei-pan-cli")
+            {
+                let filename = path.trim_start_matches("bin/bin/");
+                let filepath = PathBuf::from(dir.as_ref()).join(filename);
+                let mut target = File::create(filepath)?;
+                Self::copy_write(file, &mut target)?;
+            } else if path.contains("ui/index.cgi") {
+                let mut target =
+                    File::create(PathBuf::from(dir.as_ref()).join("xunlei-pan-cli-web"))?;
+                Self::copy_write(file, &mut target)?;
+            }
         }
 
         std::fs::remove_file(tar_path)?;
