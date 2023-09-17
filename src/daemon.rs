@@ -9,7 +9,6 @@ use crate::env;
 
 use crate::util;
 use crate::xunlei_asset;
-use crate::xunlei_asset::XunleiAsset;
 
 use crate::Config;
 use crate::Running;

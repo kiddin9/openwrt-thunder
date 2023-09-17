@@ -34,7 +34,6 @@ tikv-jemallocator = "0.5.4"
 
 [features]
 default = ["launcher", "daemon"]
-embed = ["launcher", "daemon"]
 launcher = []
 daemon = []
 

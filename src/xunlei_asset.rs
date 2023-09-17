@@ -1,62 +1,22 @@
 use core::str;
-use std::{borrow::Cow, fs::File, io::Read, path::Path};
+use std::{
+    borrow::Cow,
+    fs::File,
+    io::{Read, Write},
+    path::{Path, PathBuf},
+};
 
-#[cfg(not(feature = "embed"))]
-use std::{io::Write, ops::Not, path::PathBuf};
-
-pub trait XunleiAsset {
-    fn version(&self) -> anyhow::Result<String>;
-
-    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>>;
-
-    fn iter(&self) -> anyhow::Result<Vec<String>>;
-}
-
-#[cfg(feature = "embed")]
-#[derive(rust_embed::RustEmbed)]
-#[folder = "bin/"]
-struct Asset;
-
-use anyhow::Context;
-#[cfg(feature = "embed")]
 use anyhow::Context;
 use tar::Archive;
 
-
-#[cfg(feature = "embed")]
-struct XunleiEmbedAsset;
-
-#[cfg(feature = "embed")]
-impl XunleiAsset for XunleiEmbedAsset {
-    fn version(&self) -> anyhow::Result<String> {
-        let version_bin = Asset::get("version").context("Failed to get version asset")?;
-        let version = std::str::from_utf8(version_bin.data.as_ref())
-            .context("Error getting version number!")?;
-        Ok(String::from(version))
-    }
-
-    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
-        let bin = Asset::get(filename).context("Failed to get bin asset")?;
-        Ok(bin.data)
-    }
-
-    fn iter(&self) -> anyhow::Result<Vec<String>> {
-        Ok(Asset::iter()
-            .map(|v| v.into_owned())
-            .collect::<Vec<String>>())
-    }
-}
-
-#[cfg(not(feature = "embed"))]
-struct XunleiLocalAsset {
+pub struct Asset {
     tmp_path: PathBuf,
     filename: String,
 }
 
-#[cfg(not(feature = "embed"))]
-impl XunleiLocalAsset {
+impl Asset {
     fn new() -> anyhow::Result<Self> {
-        let xunlei = XunleiLocalAsset {
+        let xunlei = Asset {
             tmp_path: PathBuf::from("/tmp/xunlei_bin"),
             filename: format!("nasxunlei-DSM7-{}.spk", crate::env::SUPPORT_ARCH),
         };
@@ -74,7 +34,7 @@ impl XunleiLocalAsset {
         pb.set_style(indicatif::ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})")?
             .progress_chars("#>-"));
 
-        if self.tmp_path.exists().not() {
+        if !self.tmp_path.exists() {
             crate::util::create_dir_all(&self.tmp_path, 0o755)?;
         }
 
@@ -155,17 +115,18 @@ impl XunleiLocalAsset {
             let path = format!("{}", file.path()?.display());
 
             if path.contains("bin/bin/version") && !path.contains("version_code")
-            || path.contains("bin/bin/xunlei-pan-cli-launcher")
-            || path.contains("bin/bin/xunlei-pan-cli")
-        {
-            let filename = path.trim_start_matches("bin/bin/");
-            let filepath = PathBuf::from(dir.as_ref()).join(filename);
-            let mut target = File::create(filepath)?;
-            Self::copy_write(file, &mut target)?;
-        } else if path.contains("ui/index.cgi") {
-            let mut target = File::create(PathBuf::from(dir.as_ref()).join("xunlei-pan-cli-web"))?;
-            Self::copy_write(file, &mut target)?;
-        }
+                || path.contains("bin/bin/xunlei-pan-cli-launcher")
+                || path.contains("bin/bin/xunlei-pan-cli")
+            {
+                let filename = path.trim_start_matches("bin/bin/");
+                let filepath = PathBuf::from(dir.as_ref()).join(filename);
+                let mut target = File::create(filepath)?;
+                Self::copy_write(file, &mut target)?;
+            } else if path.contains("ui/index.cgi") {
+                let mut target =
+                    File::create(PathBuf::from(dir.as_ref()).join("xunlei-pan-cli-web"))?;
+                Self::copy_write(file, &mut target)?;
+            }
         }
 
         std::fs::remove_file(tar_path)?;
@@ -174,20 +135,19 @@ impl XunleiLocalAsset {
     }
 }
 
-#[cfg(not(feature = "embed"))]
-impl XunleiAsset for XunleiLocalAsset {
-    fn version(&self) -> anyhow::Result<String> {
+impl Asset {
+    pub fn version(&self) -> anyhow::Result<String> {
         Ok(std::fs::read_to_string(
             PathBuf::from(&self.tmp_path).join("version"),
         )?)
     }
 
-    fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
+    pub fn get(&self, filename: &str) -> anyhow::Result<Cow<[u8]>> {
         let vec = std::fs::read(PathBuf::from(&self.tmp_path).join(filename))?;
         Ok(std::borrow::Cow::from(vec))
     }
 
-    fn iter(&self) -> anyhow::Result<Vec<String>> {
+    pub fn iter(&self) -> anyhow::Result<Vec<String>> {
         let entries = std::fs::read_dir(&self.tmp_path)?;
         let mut file_names = Vec::new();
         for entry in entries {
@@ -202,10 +162,6 @@ impl XunleiAsset for XunleiLocalAsset {
     }
 }
 
-pub fn asset() -> anyhow::Result<impl XunleiAsset> {
-    #[cfg(not(feature = "embed"))]
-    let asset = XunleiLocalAsset::new()?;
-    #[cfg(feature = "embed")]
-    let asset = XunleiEmbedAsset {};
-    Ok(asset)
+pub fn asset() -> anyhow::Result<Asset> {
+    Asset::new()
 }

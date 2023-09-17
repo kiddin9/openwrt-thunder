@@ -11,7 +11,6 @@ use tikv_jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
-
 #[cfg(feature = "daemon")]
 pub mod daemon;
 pub mod env;
