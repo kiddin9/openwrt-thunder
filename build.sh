@@ -9,6 +9,12 @@ root=$(pwd)
 target_list=(x86_64-unknown-linux-musl aarch64-unknown-linux-musl)
 for target in ${target_list[@]}; do
 
+  if [[ $target == *"aarch64"* ]]; then
+    arch=aarch64 bash +x unpack.sh
+  else
+    bash +x unpack.sh
+  fi
+
   # default feature
   cargo zigbuild --release --target=$target
   upx --lzma target/$target/release/xunlei
@@ -21,26 +27,6 @@ for target in ${target_list[@]}; do
   cd -
   cd target/$target/debian
   rename 's/.*/xunlei-'$tag'-'$target'.deb/' *.deb
-  mv ./* $root/uploads/
-  cd -
-
-  # embed feature
-  if [[ $target == *"aarch64"* ]]; then
-    arch=aarch64 bash +x unpack.sh
-  else
-    bash +x unpack.sh
-  fi
-  cargo zigbuild --release --target=$target --no-default-features --features embed
-  upx --lzma target/$target/release/xunlei
-  cargo deb --target=$target --no-build --no-strip
-  cd target/$target/release
-  tar czvf xunlei-embed-$tag-$target.tar.gz xunlei
-  shasum -a 256 xunlei-embed-$tag-$target.tar.gz >xunlei-embed-$tag-$target.tar.gz.sha256
-  mv xunlei-embed-$tag-$target.tar.gz $root/uploads/
-  mv xunlei-embed-$tag-$target.tar.gz.sha256 $root/uploads/
-  cd -
-  cd target/$target/debian
-  rename 's/.*/xunlei-embed-'$tag'-'$target'.deb/' *.deb
   mv ./* $root/uploads/
   cd -
 
