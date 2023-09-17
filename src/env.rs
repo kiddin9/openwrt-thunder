@@ -12,7 +12,7 @@ pub const SYNOPKG_DSM_VERSION_BUILD: &str = "1";
 pub const SYNOPKG_PKGNAME: &str = "pan-xunlei-com";
 pub const SYNOPKG_PKGBASE: &str = "/var/packages/pan-xunlei-com";
 pub const SYNOPKG_PKGDEST: &str = "/var/packages/pan-xunlei-com/target";
-pub const SYNOPKG_VAR: &str = "/var/packages/pan-xunlei-com/target/var/";
+pub const SYNOPKG_VAR: &str = "/var/packages/pan-xunlei-com/target/var";
 pub const SYNOPKG_HOST: &str = "/var/packages/pan-xunlei-com/target/host";
 #[cfg(all(target_os = "linux", target_env = "musl"))]
 pub const SYNOPKG_LIB: &str = "/var/packages/pan-xunlei-com/target/host/lib";

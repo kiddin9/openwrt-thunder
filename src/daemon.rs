@@ -46,47 +46,6 @@ impl From<(bool, Config)> for XunleiInstall {
 }
 
 impl XunleiInstall {
-    fn config(&self) -> anyhow::Result<()> {
-        log::info!("[XunleiInstall] Configuration in progress");
-        log::info!("[XunleiInstall] WebUI port: {}", self.port);
-
-        if self.config_path.is_dir().not() {
-            std::fs::create_dir_all(&self.config_path)?;
-            util::recursive_chown(&&self.config_path, self.uid, self.gid);
-        } else if self.config_path.is_file() {
-            return Err(anyhow::anyhow!("Config path must be a directory"));
-        }
-
-        // the real store download path
-        if self.download_path.is_dir().not() {
-            util::create_dir_all(&self.download_path, 0o755)?;
-            util::recursive_chown(&&self.download_path, self.uid, self.gid);
-        } else if self.download_path.is_file() {
-            return Err(anyhow::anyhow!("download path must be a directory"));
-        }
-
-        // mount bind downloads directory
-        if self.mount_bind_download_path.is_dir().not() {
-            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
-            util::recursive_chown(&&self.mount_bind_download_path, self.uid, self.gid);
-        } else if self.mount_bind_download_path.is_file() {
-            return Err(anyhow::anyhow!(
-                "mount bind download path must be a directory"
-            ));
-        }
-
-        log::info!(
-            "[XunleiInstall] Config directory: {}",
-            self.config_path.display()
-        );
-        log::info!(
-            "[XunleiInstall] Download directory: {}",
-            self.download_path.display()
-        );
-        log::info!("[XunleiInstall] Configuration completed");
-        Ok(())
-    }
-
     fn install(&self) -> anyhow::Result<std::path::PathBuf> {
         log::info!("[XunleiInstall] Installing in progress");
         //  /var/packages/pan-xunlei-com
@@ -181,7 +140,7 @@ impl XunleiInstall {
         util::recursive_chown(&base_dir, self.uid, self.gid);
 
         log::info!(
-            "[XunleiInstall] chown: {}, UID:{}, GID:{}",
+            "[XunleiInstall] Install to: {}, UID:{}, GID:{}",
             target_dir.display(),
             self.uid,
             self.gid
@@ -249,8 +208,53 @@ impl XunleiInstall {
 
 impl Running for XunleiInstall {
     fn run(self) -> anyhow::Result<()> {
-        self.config()?;
-        self.systemd(self.install()?)
+        log::info!("[XunleiInstall] Configuration in progress");
+        log::info!("[XunleiInstall] WebUI Port: {}", self.port);
+
+        // config path
+        if self.config_path.is_dir().not() {
+            std::fs::create_dir_all(&self.config_path)?;
+            util::recursive_chown(&&self.config_path, self.uid, self.gid);
+        } else if self.config_path.is_file() {
+            anyhow::bail!(
+                "Config path: {} must be a directory",
+                self.config_path.display()
+            )
+        }
+
+        // real store download path
+        if self.download_path.is_dir().not() {
+            util::create_dir_all(&self.download_path, 0o755)?;
+            util::recursive_chown(&&self.download_path, self.uid, self.gid);
+        } else if self.download_path.is_file() {
+            anyhow::bail!(
+                "Download path: {} must be a directory",
+                self.download_path.display()
+            )
+        }
+
+        // mount bind downloads directory
+        if self.mount_bind_download_path.is_dir().not() {
+            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
+            util::recursive_chown(&&self.mount_bind_download_path, self.uid, self.gid);
+        } else if self.mount_bind_download_path.is_file() {
+            anyhow::bail!(
+                "Mount bind download path: {} must be a directory",
+                self.mount_bind_download_path.display()
+            )
+        }
+
+        log::info!(
+            "[XunleiInstall] Config directory: {}",
+            self.config_path.display()
+        );
+        log::info!(
+            "[XunleiInstall] Download directory: {}",
+            self.download_path.display()
+        );
+        log::info!("[XunleiInstall] Configuration completed");
+        let install_path = self.install()?;
+        self.systemd(install_path)
     }
 }
 
