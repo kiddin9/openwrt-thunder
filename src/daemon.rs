@@ -3,13 +3,12 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Context;
+use log::info;
 use rand::Rng;
 
+use crate::asset;
 use crate::env;
-
 use crate::util;
-use crate::xunlei_asset;
-
 use crate::Config;
 use crate::Running;
 
@@ -57,7 +56,7 @@ impl XunleiInstall {
 
         util::create_dir_all(&target_dir, 0o755)?;
 
-        let xunlei = xunlei_asset::asset()?;
+        let xunlei = asset::xunlei::asset()?;
         for file in xunlei.iter()? {
             let filename = file.as_str();
             let target_filepath = target_dir.join(filename);
@@ -208,6 +207,11 @@ impl XunleiInstall {
 
 impl Running for XunleiInstall {
     fn run(self) -> anyhow::Result<()> {
+        if Path::new(env::SYNOPKG_VAR).exists() {
+            info!("Already installed");
+            return Ok(());
+        }
+
         log::info!("[XunleiInstall] Configuration in progress");
         log::info!("[XunleiInstall] WebUI Port: {}", self.port);
 

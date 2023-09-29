@@ -11,16 +11,13 @@ use tikv_jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
+pub mod asset;
 #[cfg(feature = "daemon")]
 pub mod daemon;
 pub mod env;
 #[cfg(feature = "launcher")]
 pub mod launcher;
-#[cfg(all(target_os = "linux", target_env = "musl"))]
-pub mod libc_asset;
 pub mod util;
-#[cfg(feature = "daemon")]
-pub mod xunlei_asset;
 
 use clap::{Args, Parser, Subcommand};
 use std::io::Write;
