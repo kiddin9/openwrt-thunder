@@ -32,7 +32,7 @@ Usage: xunlei [OPTIONS] <COMMAND>
 Commands:
   install    Install xunlei
   uninstall  Uninstall xunlei
-  launcher     Launcher xunlei
+  launcher   Launcher xunlei
   help       Print this message or the help of the given subcommand(s)
 
 Options:
