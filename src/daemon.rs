@@ -56,7 +56,9 @@ impl XunleiInstall {
 
         util::create_dir_all(&target_dir, 0o755)?;
 
+        // download xunlei binary
         let xunlei = asset::xunlei::asset()?;
+        xunlei.downloads_package()?;
         for file in xunlei.iter()? {
             let filename = file.as_str();
             let target_filepath = target_dir.join(filename);

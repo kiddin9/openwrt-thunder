@@ -20,11 +20,10 @@ impl Asset {
             tmp_path: PathBuf::from("/tmp/xunlei_bin"),
             filename: format!("nasxunlei-DSM7-{}.spk", crate::env::SUPPORT_ARCH),
         };
-        xunlei.exestrct_package()?;
         Ok(xunlei)
     }
 
-    fn exestrct_package(&self) -> anyhow::Result<()> {
+    pub fn downloads_package(&self) -> anyhow::Result<()> {
         let response =
             ureq::get(&format!("http://down.sandai.net/nas/{}", self.filename)).call()?;
 
