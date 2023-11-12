@@ -118,9 +118,6 @@ git clone https://github.com/gngpp/xunlei && cd xunlei
 # 默认编译在线安装
 cargo build --release && mv target/release/xunlei .
 
-# 完整打包编译安装
-bash +x ./unpack.sh && cargo build --release --features embed && mv target/release/xunlei .
-
 # 执行安装
 ./xunlei install
 # 若系统不支持systemd，则手动启动daemon
