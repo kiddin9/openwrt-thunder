@@ -5,6 +5,7 @@ use rouille::Request;
 use rouille::Response;
 use std::collections::HashMap;
 use std::io;
+use std::io::BufRead;
 use std::os::unix::process::CommandExt;
 use std::sync::Mutex;
 
@@ -449,30 +450,39 @@ impl XunleiPanelServer {
                     std::io::copy(&mut body, child.stdin.take().as_mut().context("[XunleiPanelServer] Failed to read CGI stdin")?)?;
                 }
 
-                {
-                    let mut stdout = std::io::BufReader::new(child.stdout.take().context("[XunleiPanelServer] Failed to reader CGI stdout")?);
+                let output = child.wait_with_output()?;
 
-                    let mut headers = Vec::new();
-                    let mut status_code = 200;
-                    for header_res in std::io::BufRead::lines(stdout.by_ref()) {
-                        let header = header_res?;
-                        if header.is_empty() {
-                            break;
-                        }
+                let mut headers = Vec::new();
+                let mut status_code = 200;
 
-                        let (header, val) = header.split_once(':').context("[XunleiPanelServer] Failed to split_once header")?;
-                        let val = &val[1..];
+                let mut cursor = std::io::Cursor::new(output.stdout);
 
-                        if header == "Status" {
-                            status_code = val[0..3]
-                                .parse()
-                                .expect("Status returned by CGI program is invalid");
-                        } else {
-                            headers.push((header.to_owned().into(), val.to_owned().into()));
-                        }
+                for header_res in cursor.by_ref().lines() {
+                    let header = header_res?;
+                    if header.is_empty() {
+                        break;
                     }
-                    Ok(rouille::Response{status_code,headers,data:rouille::ResponseBody::from_reader(stdout),upgrade:None,})
+
+                    let (header, val) = header.split_once(':').context("[XunleiPanelServer] Failed to split_once header")?;
+                    let val = &val[1..];
+
+                    if header == "Status" {
+                        status_code = val[0..3]
+                            .parse()
+                            .expect("Status returned by CGI program is invalid");
+                    } else {
+                        headers.push((header.to_owned().into(), val.to_owned().into()));
+                    }
                 }
+
+                let resp = rouille::Response{
+                    status_code,
+                    headers,
+                    data: rouille::ResponseBody::from_reader(cursor),
+                    upgrade: None
+                };
+
+                Ok(resp)
             }
         )
     }
