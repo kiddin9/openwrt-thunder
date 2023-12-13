@@ -26,20 +26,20 @@ pub struct XunleiInstall {
     gid: u32,
 }
 
-impl From<(bool, Config)> for XunleiInstall {
-    fn from(value: (bool, Config)) -> Self {
+impl From<Config> for XunleiInstall {
+    fn from(value: Config) -> Self {
         Self {
             description: "Thunder remote download service",
-            host: value.1.host,
-            port: value.1.port,
-            download_path: value.1.download_path,
-            mount_bind_download_path: value.1.mount_bind_download_path,
-            config_path: value.1.config_path,
-            uid: value.1.uid.unwrap_or(nix::unistd::getuid().into()),
-            gid: value.1.gid.unwrap_or(nix::unistd::getgid().into()),
-            auth_user: value.1.auth_user,
-            auth_password: value.1.auth_password,
-            debug: value.0,
+            host: value.host,
+            port: value.port,
+            download_path: value.download_path,
+            mount_bind_download_path: value.mount_bind_download_path,
+            config_path: value.config_path,
+            uid: value.uid.unwrap_or(nix::unistd::getuid().into()),
+            gid: value.gid.unwrap_or(nix::unistd::getgid().into()),
+            auth_user: value.auth_user,
+            auth_password: value.auth_password,
+            debug: value.debug,
         }
     }
 }

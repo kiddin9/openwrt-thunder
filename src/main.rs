@@ -15,8 +15,7 @@ pub mod asset;
 #[cfg(feature = "daemon")]
 pub mod daemon;
 pub mod env;
-#[cfg(feature = "launcher")]
-pub mod launcher;
+mod serve;
 pub mod util;
 
 use clap::{Args, Parser, Subcommand};
@@ -31,10 +30,6 @@ pub trait Running {
 #[clap(author, version, about, arg_required_else_help = true)]
 #[command(args_conflicts_with_subcommands = true)]
 struct Opt {
-    /// Enable debug
-    #[clap(long, global = true, env = "XUNLEI_DEBUG")]
-    debug: bool,
-
     #[clap(subcommand)]
     commands: Commands,
 }
@@ -56,8 +51,11 @@ pub enum Commands {
     Launcher(Config),
 }
 
-#[derive(Args)]
+#[derive(Args, Clone)]
 pub struct Config {
+    /// Enable debug
+    #[clap(long, env = "XUNLEI_DEBUG")]
+    debug: bool,
     /// Xunlei authentication username
     #[arg(short = 'u', long, env = "XUNLEI_AUTH_USER")]
     auth_user: Option<String>,
@@ -70,6 +68,12 @@ pub struct Config {
     /// Xunlei Listen port
     #[clap(short = 'P', long, env = "XUNLEI_PORT", default_value = "5055", value_parser = parser_port_in_range)]
     port: u16,
+    /// TLS certificate file
+    #[clap(short = 'C', long, env = "XUNLEI_TLS_CERTIFICATE")]
+    tls_cert: Option<PathBuf>,
+    /// TLS private key file
+    #[clap(short = 'K', long, env = "XUNLEI_TLS_PRIVATE_KEY")]
+    tls_key: Option<PathBuf>,
     /// Xunlei UID permission
     #[clap(short = 'U', long, env = "XUNLEI_UID")]
     uid: Option<u32>,
@@ -87,13 +91,26 @@ pub struct Config {
     mount_bind_download_path: PathBuf,
 }
 
+impl Config {
+    /// Get GID
+    fn gid(&self) -> u32 {
+        self.gid.unwrap_or(nix::unistd::getgid().into())
+    }
+
+    /// Get UID
+    fn uid(&self) -> u32 {
+        self.uid.unwrap_or(nix::unistd::getuid().into())
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
-    init_log(opt.debug);
+
     match opt.commands {
         #[cfg(feature = "daemon")]
         Commands::Install(config) => {
-            daemon::XunleiInstall::from((opt.debug, config)).run()?;
+            init_log(config.debug);
+            daemon::XunleiInstall::from(config).run()?;
         }
         #[cfg(feature = "daemon")]
         Commands::Uninstall { clear } => {
@@ -101,7 +118,8 @@ fn main() -> anyhow::Result<()> {
         }
         #[cfg(feature = "launcher")]
         Commands::Launcher(config) => {
-            launcher::XunleiLauncher::from((opt.debug, config)).run()?;
+            init_log(config.debug);
+            serve::Launcher::from(config).run()?;
         }
     }
     Ok(())
