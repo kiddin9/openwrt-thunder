@@ -1,9 +1,16 @@
-use std::{io::BufRead, net::SocketAddr, process::Stdio, str::FromStr, sync::Arc, time::Duration};
+use std::{
+    io::{BufRead, Read},
+    net::SocketAddr,
+    process::Stdio,
+    str::FromStr,
+    sync::Arc,
+    time::Duration,
+};
 
 use anyhow::Context;
 use axum::{
-    body::{Body, Bytes, Full},
-    extract::{ConnectInfo, State},
+    body::{Bytes, Full, StreamBody},
+    extract::State,
     http::{header, HeaderName, HeaderValue},
     response::{Html, IntoResponse, Redirect, Response},
     routing::{any, get, post},
@@ -12,6 +19,7 @@ use axum::{
 use axum_server::{tls_rustls::RustlsConfig, AddrIncomingConfig, Handle, HttpConfig};
 use serde::Deserialize;
 use tokio::{io::BufReader, sync::OnceCell};
+use tokio_util::io::ReaderStream;
 
 use crate::{env, Config, Running};
 
@@ -69,11 +77,8 @@ impl FrontendServer {
             .route("/login", post(post_login))
             .route("/js/sha3.min.js", get(get_sha3_js))
             .route("/webman/login.cgi", get(get_webman_login))
-            .route(
-                "/webman/3rdparty/pan-xunlei-com/index.cgi/",
-                any(get_pan_xunlei_com),
-            )
-            .fallback(not_found)
+            .route("/", any(get_pan_xunlei_com))
+            .route("/*path", any(get_pan_xunlei_com))
             .with_state(Arc::new(self.0.clone()));
 
         // http server config
@@ -105,7 +110,7 @@ impl FrontendServer {
                     .handle(handle)
                     .addr_incoming_config(incoming_config)
                     .http_config(http_config)
-                    .serve(router.into_make_service_with_connect_info::<SocketAddr>())
+                    .serve(router.into_make_service())
                     .await
             }
             _ => {
@@ -113,7 +118,7 @@ impl FrontendServer {
                     .handle(handle)
                     .addr_incoming_config(incoming_config)
                     .http_config(http_config)
-                    .serve(router.into_make_service_with_connect_info::<SocketAddr>())
+                    .serve(router.into_make_service())
                     .await
             }
         };
@@ -132,11 +137,6 @@ fn authentication(auth_user: &str, auth_password: &str) -> bool {
         Some((Some(u), Some(p))) => auth_user.eq(u) && auth_password.eq(p),
         _ => true,
     }
-}
-
-/// Any global 404 handler
-async fn not_found() -> impl IntoResponse {
-    Redirect::temporary(env::SYNOPKG_WEB_UI_HOME)
 }
 
 /// GET /login handler
@@ -159,15 +159,21 @@ async fn get_webman_login() -> Json<&'static str> {
 /// Any "/webman/3rdparty/pan-xunlei-com/index.cgi/" handler
 async fn get_pan_xunlei_com(
     State(conf): State<Arc<Config>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: RequestExt,
-) -> Result<Response<Body>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
+    if !req.uri.to_string().contains(env::SYNOPKG_WEB_UI_HOME) {
+        return Ok(Redirect::temporary(env::SYNOPKG_WEB_UI_HOME).into_response());
+    }
+
+    // My Server real host
+    let remove_host = extract_real_host(&req);
+
     let mut cmd = tokio::process::Command::new(env::SYNOPKG_CLI_WEB);
     cmd.current_dir(env::SYNOPKG_PKGDEST)
         .envs(conf.envs()?)
         .env("SERVER_SOFTWARE", "rust")
         .env("SERVER_PROTOCOL", "HTTP/1.1")
-        .env("HTTP_HOST", addr.to_string())
+        .env("HTTP_HOST", &remove_host)
         .env("GATEWAY_INTERFACE", "CGI/1.1")
         .env("REQUEST_METHOD", req.method.as_str())
         .env("QUERY_STRING", req.uri.query().unwrap_or_default())
@@ -181,9 +187,9 @@ async fn get_pan_xunlei_com(
         .env("PATH_INFO", req.uri.path())
         .env("SCRIPT_NAME", ".")
         .env("SCRIPT_FILENAME", req.uri.path())
-        .env("SERVER_PORT", addr.port().to_string())
-        .env("REMOTE_ADDR", addr.to_string())
-        .env("SERVER_NAME", addr.to_string())
+        .env("SERVER_PORT", conf.port.to_string())
+        .env("REMOTE_ADDR", &remove_host)
+        .env("SERVER_NAME", &remove_host)
         .uid(conf.uid())
         .gid(conf.gid())
         .stdout(Stdio::piped())
@@ -221,13 +227,18 @@ async fn get_pan_xunlei_com(
         }
     }
 
+    // Wait for the child to exit
     let output = child.wait_with_output().await?;
 
+    // Get status code
     let mut status_code = 200;
-    let mut headers = Vec::new();
-    let cursor = std::io::Cursor::new(output.stdout.as_slice());
 
-    for header_res in cursor.lines() {
+    // Response builder
+    let mut builder = Response::builder();
+
+    // Extract headers
+    let mut cursor = std::io::Cursor::new(output.stdout);
+    for header_res in cursor.by_ref().lines() {
         let header = header_res?;
         if header.is_empty() {
             break;
@@ -243,22 +254,22 @@ async fn get_pan_xunlei_com(
                 .parse()
                 .context("Status returned by CGI program is invalid")?;
         } else {
-            headers.push((header.to_owned(), val.to_owned()));
+            builder = builder.header(HeaderName::from_str(header)?, HeaderValue::from_str(val)?);
         }
     }
 
-    let mut builder = Response::builder().status(status_code);
+    Ok(builder
+        .status(status_code)
+        .body(StreamBody::from(ReaderStream::new(cursor)))?
+        .into_response())
+}
 
-    builder.headers_mut().map(|h| {
-        for (k, v) in headers.iter() {
-            h.insert(
-                HeaderName::from_str(k).unwrap(),
-                HeaderValue::from_str(v).unwrap(),
-            );
-        }
-    });
-
-    Ok(builder.body(Body::from(Bytes::from(output.stdout)))?)
+/// Extract real request host
+fn extract_real_host(req: &RequestExt) -> &str {
+    req.headers
+        .get(header::HOST)
+        .map(|h| h.to_str().unwrap_or_default())
+        .unwrap_or_default()
 }
 
 /// GET "/js/sha3.min.js" handler
