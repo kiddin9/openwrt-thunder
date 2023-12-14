@@ -100,6 +100,7 @@ impl Asset {
 
         let mut archive = Archive::new(archive_file);
         let mut xz_file = std::fs::File::create(&xz_path)?;
+
         for file in archive.entries()? {
             // Make sure there wasn't an I/O error
             let file = file?;
@@ -119,11 +120,13 @@ impl Asset {
         let mut tar_file = std::fs::File::create(&tar_path)?;
         Self::copy_write(decompressor, &mut tar_file)?;
         tar_file.flush()?;
+        drop(tar_file);
 
         // remove xz compressed file
         std::fs::remove_file(&xz_path)?;
 
         // read tar file
+        let tar_file = std::fs::File::open(&tar_path)?;
         let mut archive = Archive::new(tar_file);
 
         for file in archive.entries()? {
