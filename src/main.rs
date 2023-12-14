@@ -1,18 +1,8 @@
-#[cfg(all(
-    any(target_arch = "x86_64", target_arch = "aarch64"),
-    target_env = "musl"
-))]
-use tikv_jemallocator::Jemalloc;
-
-#[cfg(all(
-    any(target_arch = "x86_64", target_arch = "aarch64"),
-    target_env = "musl"
-))]
+#[cfg(feature = "mimalloc")]
 #[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
+static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub mod asset;
-#[cfg(feature = "daemon")]
 pub mod daemon;
 pub mod env;
 mod serve;
@@ -36,17 +26,14 @@ struct Opt {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    #[cfg(feature = "daemon")]
     /// Install xunlei
     Install(Config),
-    #[cfg(feature = "daemon")]
     /// Uninstall xunlei
     Uninstall {
         /// Clear xunlei default config directory
         #[clap(short, long)]
         clear: bool,
     },
-    #[cfg(feature = "launcher")]
     /// Launcher xunlei
     Launcher(Config),
 }
@@ -104,16 +91,13 @@ fn main() -> anyhow::Result<()> {
     let opt = Opt::parse();
 
     match opt.commands {
-        #[cfg(feature = "daemon")]
         Commands::Install(config) => {
             init_log(config.debug);
             daemon::XunleiInstall::from(config).run()?;
         }
-        #[cfg(feature = "daemon")]
         Commands::Uninstall { clear } => {
             daemon::XunleiUninstall::from(clear).run()?;
         }
-        #[cfg(feature = "launcher")]
         Commands::Launcher(config) => {
             init_log(config.debug);
             serve::Launcher::from(config).run()?;

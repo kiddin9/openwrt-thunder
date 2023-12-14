@@ -32,14 +32,11 @@ axum = { version = "0.6.20", features = ["http2"]}
 axum-server = { version = "0.5.1", features = ["tls-rustls"] }
 tokio-util = "0.7.10"
 jsonwebtokens = "1.2.0"
-
-[target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), target_env = "musl"))'.dependencies]
-tikv-jemallocator = "0.5.4"
+mimalloc = { version = "0.1.39", default-features = false, optional = true }
 
 [features]
-default = ["launcher", "daemon"]
-launcher = []
-daemon = []
+default = ["mimalloc"]
+mimalloc = ["dep:mimalloc"]
 
 [[bin]]
 name = "xunlei"
