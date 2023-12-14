@@ -3,13 +3,16 @@
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub mod asset;
-pub mod daemon;
-pub mod env;
+pub mod constant;
+mod daemon;
+pub mod homedir;
+mod install;
 mod serve;
 pub mod util;
 
 use clap::{Args, Parser, Subcommand};
-use std::io::Write;
+use std::io::{BufRead, Write};
+use std::net::SocketAddr;
 use std::path::PathBuf;
 
 pub trait Running {
@@ -27,64 +30,138 @@ struct Opt {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Install xunlei
-    Install(Config),
+    Install(InstallConfig),
     /// Uninstall xunlei
     Uninstall {
         /// Clear xunlei default config directory
         #[clap(short, long)]
         clear: bool,
     },
-    /// Launcher xunlei
-    Launcher(Config),
+    /// Run xunlei
+    Run(ServeConfig),
+    /// Start xunlei daemon
+    Start(ServeConfig),
+    /// Stop xunlei daemon
+    Stop,
+    /// Xunlei log
+    Log,
 }
 
 #[derive(Args, Clone)]
-pub struct Config {
+pub struct InstallConfig {
+    /// Xunlei UID permission
+    #[clap(short = 'U', long, env = "XUNLEI_UID", default_value = "0")]
+    uid: u32,
+    /// Xunlei GID permission
+    #[clap(short = 'G', long, env = "XUNLEI_GID", default_value = "0")]
+    gid: u32,
+    /// Install xunlei from package
+    package: Option<PathBuf>,
+    /// Xunlei config directory
+    #[clap(short, long, default_value = constant::DEFAULT_CONFIG_PATH)]
+    config_path: PathBuf,
+    /// Xunlei download directory
+    #[clap(short, long, default_value = constant::DEFAULT_DOWNLOAD_PATH)]
+    download_path: PathBuf,
+    /// Xunlei mount bind download directory
+    #[clap(short, long, default_value = constant::DEFAULT_BIND_DOWNLOAD_PATH)]
+    mount_bind_download_path: PathBuf,
+}
+
+impl InstallConfig {
+    const P: &'static str = ".xunlei";
+
+    /// Write to file
+    fn write_to_file(&self) -> anyhow::Result<()> {
+        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        if !path.exists() {
+            let mut file = std::fs::File::create(&path)?;
+            writeln!(file, "uid={}", self.uid)?;
+            writeln!(file, "gid={}", self.gid)?;
+            writeln!(file, "config_path={}", self.config_path.display())?;
+            writeln!(file, "download_path={}", self.download_path.display())?;
+            writeln!(
+                file,
+                "mount_bind_download_path={}",
+                self.mount_bind_download_path.display()
+            )?;
+            file.flush()?;
+            drop(file)
+        }
+        Ok(())
+    }
+
+    /// Read from file
+    fn read_from_file() -> anyhow::Result<Self> {
+        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        if !path.exists() {
+            anyhow::bail!("`{}` not found", path.display());
+        }
+
+        let mut uid = 0;
+        let mut gid = 0;
+        let mut config_path = PathBuf::new();
+        let mut download_path = PathBuf::new();
+        let mut mount_bind_download_path = PathBuf::new();
+
+        let file = std::fs::File::open(&path)?;
+        let reader = std::io::BufReader::new(file);
+        for line in reader.lines() {
+            let line = line?;
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let mut split = line.split('=');
+            let key = split.next().unwrap_or_default();
+            let value = split.next().unwrap_or_default();
+            match key {
+                "uid" => {
+                    uid = value.parse()?;
+                }
+                "gid" => {
+                    gid = value.parse()?;
+                }
+                "config_path" => {
+                    config_path = value.parse()?;
+                }
+                "download_path" => {
+                    download_path = value.parse()?;
+                }
+                "mount_bind_download_path" => {
+                    mount_bind_download_path = value.parse()?;
+                }
+                _ => {}
+            }
+        }
+
+        Ok(Self {
+            uid,
+            gid,
+            config_path,
+            download_path,
+            mount_bind_download_path,
+            package: None,
+        })
+    }
+}
+#[derive(Args, Clone)]
+pub struct ServeConfig {
     /// Enable debug
     #[clap(long, env = "XUNLEI_DEBUG")]
     debug: bool,
     /// Xunlei authentication password
-    #[arg(short = 'w', long, env = "XUNLEI_AUTH_PASSWORD")]
+    #[arg(short = 'w', long, env = "XUNLEI_AUTH_PASS")]
     auth_password: Option<String>,
-    /// Xunlei Listen host
-    #[clap(short = 'H', long, env = "XUNLEI_HOST", default_value = "0.0.0.0", value_parser = parser_host)]
-    host: std::net::IpAddr,
-    /// Xunlei Listen port
-    #[clap(short = 'P', long, env = "XUNLEI_PORT", default_value = "5055", value_parser = parser_port_in_range)]
-    port: u16,
+    /// Xunlei bind address
+    #[clap(short = 'B', long, env = "XUNLEI_BIND", default_value = "0.0.0.0:5055")]
+    bind: SocketAddr,
     /// TLS certificate file
-    #[clap(short = 'C', long, env = "XUNLEI_TLS_CERTIFICATE")]
+    #[clap(short = 'C', long, env = "XUNLEI_TLS_CERT")]
     tls_cert: Option<PathBuf>,
     /// TLS private key file
-    #[clap(short = 'K', long, env = "XUNLEI_TLS_PRIVATE_KEY")]
+    #[clap(short = 'K', long, env = "XUNLEI_TLS_KEY")]
     tls_key: Option<PathBuf>,
-    /// Xunlei UID permission
-    #[clap(short = 'U', long, env = "XUNLEI_UID")]
-    uid: Option<u32>,
-    /// Xunlei GID permission
-    #[clap(short = 'G', long, env = "XUNLEI_GID")]
-    gid: Option<u32>,
-    /// Xunlei config directory
-    #[clap(short, long, default_value = env::DEFAULT_CONFIG_PATH)]
-    config_path: PathBuf,
-    /// Xunlei download directory
-    #[clap(short, long, default_value = env::DEFAULT_DOWNLOAD_PATH)]
-    download_path: PathBuf,
-    /// Xunlei mount bind download directory
-    #[clap(short, long, default_value = env::DEFAULT_BIND_DOWNLOAD_PATH)]
-    mount_bind_download_path: PathBuf,
-}
-
-impl Config {
-    /// Get GID
-    fn gid(&self) -> u32 {
-        self.gid.unwrap_or(nix::unistd::getgid().into())
-    }
-
-    /// Get UID
-    fn uid(&self) -> u32 {
-        self.uid.unwrap_or(nix::unistd::getuid().into())
-    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -92,60 +169,25 @@ fn main() -> anyhow::Result<()> {
 
     match opt.commands {
         Commands::Install(config) => {
-            init_log(config.debug);
-            daemon::XunleiInstall::from(config).run()?;
+            config.write_to_file()?;
+            install::XunleiInstall(config).run()?;
         }
         Commands::Uninstall { clear } => {
-            daemon::XunleiUninstall::from(clear).run()?;
+            install::XunleiUninstall(clear).run()?;
         }
-        Commands::Launcher(config) => {
-            init_log(config.debug);
-            serve::Launcher::from(config).run()?;
+        Commands::Run(config) => {
+            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
+        }
+        Commands::Start(config) => {
+            daemon::start()?;
+            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
+        }
+        Commands::Stop => {
+            daemon::stop()?;
+        }
+        Commands::Log => {
+            daemon::log()?;
         }
     }
     Ok(())
-}
-
-fn init_log(debug: bool) {
-    match debug {
-        true => std::env::set_var("RUST_LOG", "DEBUG"),
-        false => std::env::set_var("RUST_LOG", "INFO"),
-    };
-    env_logger::builder()
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "{} {}: {}",
-                record.level(),
-                //Format like you want to: <-----------------
-                chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-                record.args()
-            )
-        })
-        .init();
-}
-
-const PORT_RANGE: std::ops::RangeInclusive<usize> = 1024..=65535;
-
-// port range parser
-fn parser_port_in_range(s: &str) -> anyhow::Result<u16> {
-    let port: usize = s
-        .parse()
-        .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a port number", s)))?;
-    if PORT_RANGE.contains(&port) {
-        return Ok(port as u16);
-    }
-    anyhow::bail!(format!(
-        "Port not in range {}-{}",
-        PORT_RANGE.start(),
-        PORT_RANGE.end()
-    ))
-}
-
-// address parser
-fn parser_host(s: &str) -> anyhow::Result<std::net::IpAddr> {
-    let addr = s
-        .parse::<std::net::IpAddr>()
-        .map_err(|_| anyhow::anyhow!(format!("`{}` isn't a ip address", s)))?;
-    Ok(addr)
 }

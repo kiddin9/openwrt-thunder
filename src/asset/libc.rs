@@ -10,25 +10,25 @@ struct Asset;
 
 #[cfg(target_os = "linux")]
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
-    use crate::{env, util};
+    use crate::{constant, util};
     use anyhow::Context;
     use std::ops::Not;
     use std::path::Path;
 
     if is_musl()?.not() {
-        log::debug!("[Asset] Run on glibc environment");
+        log::debug!("Run on glibc environment");
         return Ok(());
     }
-    log::debug!("[Asset] Run on musl environment");
+    log::debug!("Run on musl environment");
     #[cfg(target_arch = "x86_64")]
     const LD: &str = "ld-linux-x86-64.so.2";
     #[cfg(target_arch = "aarch64")]
     const LD: &str = "ld-linux-aarch64.so.1";
 
-    let syno_lib_path = std::path::Path::new(env::SYNOPKG_LIB);
+    let syno_lib_path = Path::new(constant::SYNOPKG_LIB);
     if !syno_lib_path.exists() {
         std::fs::create_dir_all(&syno_lib_path).context(format!(
-            "[Asset] Failed to create directory: {}",
+            "Failed to create directory: {}",
             syno_lib_path.display()
         ))?;
     }
@@ -38,20 +38,20 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
     {
         let target_file = syno_lib_path.join(&filename);
         if !target_file.exists() {
-            let file = Asset::get(&filename).context("[Asset] Failed to get bin asset")?;
+            let file = Asset::get(&filename).context("Failed to get bin asset")?;
             util::write_file(&target_file, file.data, 0o755)?;
         }
     }
 
-    for sys_lib in env::SYS_LIB_ARRAY {
+    for sys_lib in constant::SYS_LIB_ARRAY {
         let sys_lib_path = Path::new(sys_lib);
         let sys_ld_path = sys_lib_path.join(LD);
         let output = std::process::Command::new("ldd")
-            .arg(env::LAUNCHER_EXE)
+            .arg(constant::LAUNCHER_EXE)
             .output()
-            .expect("[Asset] Failed to execute ldd command");
+            .expect("Failed to execute ldd command");
         let stdout = String::from_utf8(output.stdout)?;
-        log::debug!("[Asset] ldd stdout: {}", &stdout);
+        log::debug!("ldd stdout: {}", &stdout);
         match output.status.success()
             && stdout.contains(format!("{}", sys_ld_path.display()).as_str())
         {
@@ -63,11 +63,11 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                 if sys_ld_path.exists() {
                     let real_ld_path = std::fs::canonicalize(&sys_ld_path)?;
                     let real_lib_path = real_ld_path.parent().context(format!(
-                        "[Asset] The library path does not exist: {}",
+                        "The library path does not exist: {}",
                         real_ld_path.display()
                     ))?;
                     log::info!(
-                        "[Asset] Real path of the symlink {}: {}",
+                        "Real path of the symlink {}: {}",
                         sys_ld_path.display(),
                         real_ld_path.display()
                     );
@@ -75,20 +75,17 @@ pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> an
                         String::from("LD_LIBRARY_PATH"),
                         format!("{}", real_lib_path.display()),
                     );
-                    log::info!(
-                        "[Asset] LD_LIBRARY_PATH={}",
-                        format!("{}", real_lib_path.display())
-                    );
+                    log::info!("LD_LIBRARY_PATH={}", format!("{}", real_lib_path.display()));
                     return Ok(());
                 }
-                let syno_ld_path = Path::new(env::SYNOPKG_LIB).join(LD);
+                let syno_ld_path = Path::new(constant::SYNOPKG_LIB).join(LD);
                 nix::unistd::symlinkat(&syno_ld_path, None, &sys_ld_path)?;
 
                 envs.insert(
                     String::from("LD_LIBRARY_PATH"),
-                    env::SYNOPKG_LIB.to_string(),
+                    constant::SYNOPKG_LIB.to_string(),
                 );
-                log::info!("[Asset] LD_LIBRARY_PATH={}", env::SYNOPKG_LIB);
+                log::info!("LD_LIBRARY_PATH={}", constant::SYNOPKG_LIB);
                 return Ok(());
             }
             false => {}
@@ -106,6 +103,6 @@ fn is_musl() -> anyhow::Result<bool> {
         true => String::from_utf8(output.stdout).unwrap(),
         false => String::from_utf8(output.stderr).unwrap(),
     };
-    log::debug!("[Asset] ldd --version stdout: {}", out);
+    log::debug!("ldd --version stdout: {}", out);
     Ok(out.to_lowercase().contains("musl"))
 }

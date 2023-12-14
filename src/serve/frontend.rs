@@ -4,7 +4,7 @@ use super::{
     ext::RequestExt,
     ConfigExt,
 };
-use crate::{env, Config, Running};
+use crate::{constant, InstallConfig, Running, ServeConfig};
 use anyhow::Context;
 use axum::{
     body::{Body, StreamBody},
@@ -18,7 +18,6 @@ use axum_server::{tls_rustls::RustlsConfig, AddrIncomingConfig, Handle, HttpConf
 use serde::Deserialize;
 use std::{
     io::{BufRead, Read},
-    net::SocketAddr,
     process::Stdio,
     str::FromStr,
     sync::Arc,
@@ -37,7 +36,7 @@ struct User {
     password: String,
 }
 
-pub(super) struct FrontendServer(Config);
+pub(super) struct FrontendServer(ServeConfig, InstallConfig);
 
 impl Running for FrontendServer {
     fn run(self) -> anyhow::Result<()> {
@@ -45,13 +44,11 @@ impl Running for FrontendServer {
     }
 }
 
-impl From<Config> for FrontendServer {
-    fn from(config: Config) -> Self {
-        Self(config)
-    }
-}
-
 impl FrontendServer {
+    pub(super) fn new(serve_config: ServeConfig, install_config: InstallConfig) -> Self {
+        Self(serve_config, install_config)
+    }
+
     #[tokio::main]
     async fn start_server(self) -> anyhow::Result<()> {
         // Set check auth
@@ -66,7 +63,7 @@ impl FrontendServer {
             .route_layer(axum::middleware::from_fn(auth_middleware))
             .route("/login", get(get_login))
             .route("/login", post(post_login))
-            .with_state(Arc::new(self.0.clone()));
+            .with_state(Arc::new((self.0.clone(), self.1.clone())));
 
         // http server config
         let http_config = HttpConfig::new()
@@ -84,8 +81,6 @@ impl FrontendServer {
         // Signal the server to shutdown using Handle.
         let handle = Handle::new();
 
-        let socket = SocketAddr::from((self.0.host, self.0.port));
-
         // If tls_cert and tls_key is not None, use https
         let result = match (self.0.tls_cert, self.0.tls_key) {
             (Some(cert), Some(key)) => {
@@ -93,7 +88,7 @@ impl FrontendServer {
                     .await
                     .expect("Failed to load TLS keypair");
 
-                axum_server::bind_rustls(socket, tls_config)
+                axum_server::bind_rustls(self.0.bind, tls_config)
                     .handle(handle)
                     .addr_incoming_config(incoming_config)
                     .http_config(http_config)
@@ -101,7 +96,7 @@ impl FrontendServer {
                     .await
             }
             _ => {
-                axum_server::bind(socket)
+                axum_server::bind(self.0.bind)
                     .handle(handle)
                     .addr_incoming_config(incoming_config)
                     .http_config(http_config)
@@ -136,7 +131,7 @@ async fn post_login(user: Form<User>) -> Result<impl IntoResponse, Redirect> {
     if authentication(user.password.as_str()) {
         if let Ok(token) = token::generate_token() {
             let resp = Response::builder()
-                .header(header::LOCATION, env::SYNOPKG_WEB_UI_HOME)
+                .header(header::LOCATION, constant::SYNOPKG_WEB_UI_HOME)
                 .header(
                     header::SET_COOKIE,
                     format!("{ACCESS_COOKIE}={token}; Max-Age={EXP}; Path=/; HttpOnly"),
@@ -158,22 +153,25 @@ async fn get_webman_login() -> Json<&'static str> {
 
 /// Any "/webman/3rdparty/pan-xunlei-com/index.cgi/" handler
 async fn get_pan_xunlei_com(
-    State(conf): State<Arc<Config>>,
+    State(conf): State<Arc<(ServeConfig, InstallConfig)>>,
     req: RequestExt,
 ) -> Result<impl IntoResponse, AppError> {
-    if !req.uri.to_string().contains(env::SYNOPKG_WEB_UI_HOME) {
-        return Ok(Redirect::temporary(env::SYNOPKG_WEB_UI_HOME).into_response());
+    if !req.uri.to_string().contains(constant::SYNOPKG_WEB_UI_HOME) {
+        return Ok(Redirect::temporary(constant::SYNOPKG_WEB_UI_HOME).into_response());
     }
+
+    // environment variables
+    let envs = (&conf.0, &conf.1).envs()?;
 
     // My Server real host
     let remove_host = extract_real_host(&req);
 
-    let mut cmd = tokio::process::Command::new(env::SYNOPKG_CLI_WEB);
-    cmd.current_dir(env::SYNOPKG_PKGDEST)
-        .envs(conf.envs()?)
+    let mut cmd = tokio::process::Command::new(constant::SYNOPKG_CLI_WEB);
+    cmd.current_dir(constant::SYNOPKG_PKGDEST)
+        .envs(envs)
         .env("SERVER_SOFTWARE", "rust")
         .env("SERVER_PROTOCOL", "HTTP/1.1")
-        .env("HTTP_HOST", &remove_host)
+        .env("HTTP_HOST", remove_host)
         .env("GATEWAY_INTERFACE", "CGI/1.1")
         .env("REQUEST_METHOD", req.method.as_str())
         .env("QUERY_STRING", req.uri.query().unwrap_or_default())
@@ -187,17 +185,13 @@ async fn get_pan_xunlei_com(
         .env("PATH_INFO", req.uri.path())
         .env("SCRIPT_NAME", ".")
         .env("SCRIPT_FILENAME", req.uri.path())
-        .env("SERVER_PORT", conf.port.to_string())
-        .env("REMOTE_ADDR", &remove_host)
-        .env("SERVER_NAME", &remove_host)
-        .uid(conf.uid())
-        .gid(conf.gid())
+        .env("SERVER_PORT", conf.0.bind.port().to_string())
+        .env("REMOTE_ADDR", remove_host)
+        .env("SERVER_NAME", remove_host)
+        .uid(conf.1.uid)
+        .gid(conf.1.gid)
         .stdout(Stdio::piped())
         .stdin(Stdio::piped());
-
-    if !conf.debug {
-        cmd.stderr(Stdio::null());
-    }
 
     for ele in req.headers.iter() {
         let k = ele.0.as_str().to_ascii_lowercase();
@@ -264,7 +258,7 @@ async fn get_pan_xunlei_com(
         .into_response())
 }
 
-/// Extract real request host
+/// Extract real request host (bind, port)
 fn extract_real_host(req: &RequestExt) -> &str {
     req.headers
         .get(header::HOST)

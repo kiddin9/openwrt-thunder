@@ -5,14 +5,13 @@ use super::{CHECK_AUTH, EXP, TOKEN_SECRET};
 
 fn get_or_init_secret() -> &'static String {
     TOKEN_SECRET.get_or_init(|| {
-        let s = if let Some(Some(auth_password)) = CHECK_AUTH.get() {
-            let (x, y) = super::murmur::murmurhash3_x64_128(auth_password.as_bytes(), 31);
-            format!("{x}{y}")
+        let secret = if let Some(Some(auth_password)) = CHECK_AUTH.get() {
+            auth_password.to_owned()
         } else {
-            let (x, y) = super::murmur::murmurhash3_x64_128(b"fuck", 31);
-            format!("{x}{y}")
+            generate_random_string(31)
         };
-        s
+        let (x, y) = super::murmur::murmurhash3_x64_128(secret.as_bytes(), 31);
+        format!("{x}{y}")
     })
 }
 
@@ -36,8 +35,19 @@ pub fn verifier(token_str: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn now_duration() -> anyhow::Result<Duration> {
+fn now_duration() -> anyhow::Result<Duration> {
     let now = std::time::SystemTime::now();
     let duration = now.duration_since(std::time::UNIX_EPOCH)?;
     Ok(duration)
+}
+
+fn generate_random_string(len: usize) -> String {
+    use rand::distributions::Alphanumeric;
+    use rand::{thread_rng, Rng};
+    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let rng = thread_rng();
+    rng.sample_iter(&Alphanumeric)
+        .take(len)
+        .map(|x| CHARSET[x as usize % CHARSET.len()] as char)
+        .collect()
 }

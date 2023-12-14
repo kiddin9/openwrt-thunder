@@ -3,7 +3,6 @@ pub const SUPPORT_ARCH: &str = "armv8";
 #[cfg(target_arch = "x86_64")]
 pub const SUPPORT_ARCH: &str = "x86_64";
 pub const APP_NAME: &str = "xunlei";
-pub const SYSTEMCTL_UNIT_FILE: &str = "/etc/systemd/system/xunlei.service";
 pub const SYNO_AUTHENTICATE_PATH: &str = "/usr/syno/synoman/webman/modules/authenticate.cgi";
 pub const SYNO_INFO_PATH: &str = "/etc/synoinfo.conf";
 pub const SYNOPKG_DSM_VERSION_MAJOR: &str = "7";

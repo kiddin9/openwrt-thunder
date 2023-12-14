@@ -1,358 +1,137 @@
-use std::ops::Not;
-use std::path::Path;
-use std::path::PathBuf;
+use daemonize::Daemonize;
+use std::{
+    fs::{File, Permissions},
+    os::unix::prelude::PermissionsExt,
+};
+use std::{
+    io::{self, BufRead},
+    path::Path,
+};
 
-use anyhow::Context;
-use log::info;
-use rand::Rng;
+#[cfg(target_family = "unix")]
+pub(crate) const PID_PATH: &str = "/var/run/xunlei.pid";
+#[cfg(target_family = "unix")]
+pub(crate) const DEFAULT_STDOUT_PATH: &str = "/var/run/xunlei.out";
+#[cfg(target_family = "unix")]
+pub(crate) const DEFAULT_STDERR_PATH: &str = "/var/run/xunlei.err";
+#[cfg(target_family = "unix")]
+pub(crate) const DEFAULT_WORK_DIR: &str = "/";
 
-use crate::asset;
-use crate::env;
-use crate::util;
-use crate::Config;
-use crate::Running;
+pub fn check_root() {
+    use nix::unistd::Uid;
 
-pub struct XunleiInstall {
-    description: &'static str,
-    auth_password: Option<String>,
-    host: std::net::IpAddr,
-    port: u16,
-    debug: bool,
-    download_path: PathBuf,
-    mount_bind_download_path: PathBuf,
-    config_path: PathBuf,
-    uid: u32,
-    gid: u32,
-}
-
-impl From<Config> for XunleiInstall {
-    fn from(value: Config) -> Self {
-        Self {
-            description: "Thunder remote download service",
-            host: value.host,
-            port: value.port,
-            download_path: value.download_path,
-            mount_bind_download_path: value.mount_bind_download_path,
-            config_path: value.config_path,
-            uid: value.uid.unwrap_or(nix::unistd::getuid().into()),
-            gid: value.gid.unwrap_or(nix::unistd::getgid().into()),
-            auth_password: value.auth_password,
-            debug: value.debug,
-        }
+    if !Uid::effective().is_root() {
+        println!("You must run this executable with root permissions");
+        std::process::exit(-1)
     }
 }
 
-impl XunleiInstall {
-    fn install(&self) -> anyhow::Result<std::path::PathBuf> {
-        log::info!("[XunleiInstall] Installing in progress");
-        //  /var/packages/pan-xunlei-com
-        let base_dir = Path::new(env::SYNOPKG_PKGBASE);
-        // /var/packages/pan-xunlei-com/target
-        let target_dir = PathBuf::from(env::SYNOPKG_PKGDEST);
-        // /var/packages/pan-xunlei-com/target/host
-        let host_dir = PathBuf::from(env::SYNOPKG_HOST);
-
-        util::create_dir_all(&target_dir, 0o755)?;
-
-        // download xunlei binary
-        let xunlei = asset::xunlei::asset()?;
-        xunlei.downloads_package()?;
-        for file in xunlei.iter()? {
-            let filename = file.as_str();
-            let target_filepath = target_dir.join(filename);
-            let data = xunlei.get(filename).context("Read data failure")?;
-            util::write_file(&target_filepath, data, 0o755)?;
-            log::info!("[XunleiInstall] Install to: {}", target_filepath.display());
-            util::chown(&target_filepath, self.uid, self.gid).context(format!(
-                "Failed to set permission: {}, UID:{}, UID:{}",
-                base_dir.display(),
-                self.uid,
-                self.gid
-            ))?;
-        }
-
-        // path: /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf
-        let synoinfo_path = PathBuf::from(format!("{}{}", host_dir.display(), env::SYNO_INFO_PATH));
-        util::create_dir_all(
-            synoinfo_path.parent().context(format!(
-                "the path: {} parent not exists",
-                synoinfo_path.display()
-            ))?,
-            0o755,
-        )?;
-        let mut byte_arr = vec![0u8; 32];
-        rand::thread_rng().fill(&mut byte_arr[..]);
-        let hex_string = byte_arr
-            .iter()
-            .map(|u| format!("{:02x}", *u as u32))
-            .collect::<String>()
-            .chars()
-            .take(7)
-            .collect::<String>();
-        util::write_file(
-            &synoinfo_path,
-            std::borrow::Cow::Borrowed(
-                format!("unique=\"synology_{}_720+\"", hex_string).as_bytes(),
-            ),
-            0o644,
-        )?;
-
-        // path: /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi
-        let syno_authenticate_path = PathBuf::from(format!(
-            "{}{}",
-            host_dir.display(),
-            env::SYNO_AUTHENTICATE_PATH
-        ));
-        util::create_dir_all(
-            syno_authenticate_path.parent().context(format!(
-                "directory path: {} not exists",
-                syno_authenticate_path.display()
-            ))?,
-            0o755,
-        )?;
-        util::write_file(
-            &syno_authenticate_path,
-            std::borrow::Cow::Borrowed(String::from("#!/usr/bin/env sh\necho OK").as_bytes()),
-            0o755,
-        )?;
-
-        let target_synoinfo_path = Path::new(env::SYNO_INFO_PATH);
-        nix::unistd::symlinkat(&synoinfo_path, None, target_synoinfo_path).context(format!(
-            "falied symlink {} to {}",
-            synoinfo_path.display(),
-            target_synoinfo_path.display()
-        ))?;
-
-        let target_syno_authenticate_path = Path::new(env::SYNO_AUTHENTICATE_PATH);
-        let patent_ = target_syno_authenticate_path.parent().context(format!(
-            "directory path: {} not exists",
-            target_syno_authenticate_path.display()
-        ))?;
-        util::create_dir_all(patent_, 0o755)?;
-        nix::unistd::symlinkat(&syno_authenticate_path, None, target_syno_authenticate_path)
-            .context(format!(
-                "falied symlink {} to {}",
-                syno_authenticate_path.display(),
-                target_syno_authenticate_path.display()
-            ))?;
-
-        util::recursive_chown(&base_dir, self.uid, self.gid);
-
-        log::info!(
-            "[XunleiInstall] Install to: {}, UID:{}, GID:{}",
-            target_dir.display(),
-            self.uid,
-            self.gid
-        );
-        log::info!("[XunleiInstall] Installation completed");
-        Ok(std::env::current_exe()?)
+pub(crate) fn get_pid() -> Option<String> {
+    if let Ok(data) = std::fs::read(PID_PATH) {
+        let binding = String::from_utf8(data).expect("pid file is not utf8");
+        return Some(binding.trim().to_string());
     }
-
-    fn systemd(&self, binary: PathBuf) -> anyhow::Result<()> {
-        if Systemd::support().not() {
-            return Ok(());
-        }
-
-        let auth = if let Some(ref auth_password) = self.auth_password {
-            format!("--auth-password {auth_password}")
-        } else {
-            "".to_string()
-        };
-
-        let debug = match self.debug {
-            true => "--debug",
-            false => "",
-        };
-
-        let uid = format!("--uid {}", &self.uid);
-        let gid = format!("--gid {}", &self.gid);
-
-        let systemctl_unit = format!(
-            r#"[Unit]
-                Description={}
-                After=network.target network-online.target
-                Requires=network-online.target
-                
-                [Service]
-                Type=simple
-                ExecStart={} launcher -H {} -P {} --download-path {} --config-path {} {auth} {debug} {uid} {gid}
-                User=root
-                Group=root
-                
-                [Install]
-                WantedBy=multi-user.target"#,
-            self.description,
-            binary.display(),
-            self.host,
-            self.port,
-            self.download_path.display(),
-            self.config_path.display(),
-        );
-
-        util::write_file(
-            &PathBuf::from(env::SYSTEMCTL_UNIT_FILE),
-            std::borrow::Cow::Borrowed(systemctl_unit.as_bytes()),
-            0o666,
-        )?;
-
-        Systemd::systemctl(["daemon-reload"])?;
-        Systemd::systemctl(["enable", env::APP_NAME])?;
-        Systemd::systemctl(["start", env::APP_NAME])?;
-        Ok(())
-    }
+    None
 }
 
-impl Running for XunleiInstall {
-    fn run(self) -> anyhow::Result<()> {
-        if Path::new(env::SYNOPKG_VAR).exists() {
-            info!("Already installed");
-            return Ok(());
-        }
+pub(super) fn start() -> anyhow::Result<()> {
+    // Check user is root
+    check_root();
 
-        log::info!("[XunleiInstall] Configuration in progress");
-        log::info!("[XunleiInstall] WebUI Port: {}", self.port);
-
-        // config path
-        if self.config_path.is_dir().not() {
-            std::fs::create_dir_all(&self.config_path)?;
-            util::recursive_chown(&&self.config_path, self.uid, self.gid);
-        } else if self.config_path.is_file() {
-            anyhow::bail!(
-                "Config path: {} must be a directory",
-                self.config_path.display()
-            )
-        }
-
-        // real store download path
-        if self.download_path.is_dir().not() {
-            util::create_dir_all(&self.download_path, 0o755)?;
-            util::recursive_chown(&&self.download_path, self.uid, self.gid);
-        } else if self.download_path.is_file() {
-            anyhow::bail!(
-                "Download path: {} must be a directory",
-                self.download_path.display()
-            )
-        }
-
-        // mount bind downloads directory
-        if self.mount_bind_download_path.is_dir().not() {
-            util::create_dir_all(&self.mount_bind_download_path, 0o755)?;
-            util::recursive_chown(&&self.mount_bind_download_path, self.uid, self.gid);
-        } else if self.mount_bind_download_path.is_file() {
-            anyhow::bail!(
-                "Mount bind download path: {} must be a directory",
-                self.mount_bind_download_path.display()
-            )
-        }
-
-        log::info!(
-            "[XunleiInstall] Config directory: {}",
-            self.config_path.display()
-        );
-        log::info!(
-            "[XunleiInstall] Download directory: {}",
-            self.download_path.display()
-        );
-        log::info!("[XunleiInstall] Configuration completed");
-        let install_path = self.install()?;
-        self.systemd(install_path)
+    if let Some(pid) = get_pid() {
+        println!("Ninja is already running with pid: {}", pid);
+        return Ok(());
     }
+
+    let pid_file = File::create(PID_PATH)?;
+    pid_file.set_permissions(Permissions::from_mode(0o755))?;
+
+    let stdout = File::create(DEFAULT_STDOUT_PATH)?;
+    stdout.set_permissions(Permissions::from_mode(0o755))?;
+
+    let stderr = File::create(DEFAULT_STDERR_PATH)?;
+    stdout.set_permissions(Permissions::from_mode(0o755))?;
+
+    let mut daemonize = Daemonize::new()
+        .pid_file(PID_PATH) // Every method except `new` and `start`
+        .chown_pid_file(true) // is optional, see `Daemonize` documentation
+        .working_directory(DEFAULT_WORK_DIR) // for default behaviour.
+        .umask(0o777) // Set umask, `0o027` by default.
+        .stdout(stdout) // Redirect stdout to `/tmp/daemon.out`.
+        .stderr(stderr) // Redirect stderr to `/tmp/daemon.err`.
+        .privileged_action(|| "Executed before drop privileges");
+
+    if let Ok(user) = std::env::var("SUDO_USER") {
+        if let Ok(Some(real_user)) = nix::unistd::User::from_name(&user) {
+            daemonize = daemonize
+                .user(real_user.name.as_str())
+                .group(real_user.gid.as_raw());
+        }
+    }
+
+    if let Some(err) = daemonize.start().err() {
+        eprintln!("Error: {err}")
+    }
+
+    Ok(())
 }
 
-pub struct XunleiUninstall {
-    clear: bool,
-}
+pub(super) fn stop() -> anyhow::Result<()> {
+    use nix::sys::signal;
+    use nix::unistd::Pid;
 
-impl XunleiUninstall {
-    fn uninstall(&self) -> anyhow::Result<()> {
-        if Systemd::support() {
-            let path = Path::new(env::SYSTEMCTL_UNIT_FILE);
-            if path.exists() {
-                std::fs::remove_file(path)?;
-                log::info!("[XunleiUninstall] Uninstall xunlei service");
+    check_root();
+
+    if let Some(pid) = get_pid() {
+        let pid = pid.parse::<i32>()?;
+        for _ in 0..360 {
+            if signal::kill(Pid::from_raw(pid), signal::SIGINT).is_err() {
+                break;
             }
+            std::thread::sleep(std::time::Duration::from_secs(1))
         }
-        let path = Path::new(env::SYNOPKG_PKGBASE);
-        if path.exists() {
-            std::fs::remove_dir_all(path)?;
-            log::info!("[XunleiUninstall] Uninstall xunlei package");
+        let _ = std::fs::remove_file(PID_PATH);
+    }
+
+    Ok(())
+}
+
+pub(super) fn log() -> anyhow::Result<()> {
+    fn read_and_print_file(file_path: &Path, placeholder: &str) -> anyhow::Result<()> {
+        if !file_path.exists() {
+            return Ok(());
         }
 
-        fn remove_if_symlink(path: &Path) -> Result<(), std::io::Error> {
-            if let Ok(metadata) = std::fs::symlink_metadata(path) {
-                if metadata.file_type().is_symlink() {
-                    std::fs::remove_file(path)?;
-                    log::info!("[XunleiUninstall] Uninstall xunlei {}", path.display());
+        // Check if the file is empty before opening it
+        let metadata = std::fs::metadata(file_path)?;
+        if metadata.len() == 0 {
+            return Ok(());
+        }
+
+        let file = File::open(file_path)?;
+        let reader = io::BufReader::new(file);
+        let mut start = true;
+
+        for line in reader.lines() {
+            if let Ok(content) = line {
+                if start {
+                    start = false;
+                    println!("{placeholder}");
                 }
-            }
-            Ok(())
-        }
-
-        remove_if_symlink(Path::new(env::SYNO_INFO_PATH))?;
-        remove_if_symlink(Path::new(env::SYNO_AUTHENTICATE_PATH))?;
-
-        // Clear xunlei default config directory
-        if self.clear {
-            let path = Path::new(env::DEFAULT_CONFIG_PATH);
-            if path.exists() {
-                std::fs::remove_dir_all(Path::new(path))?
+                println!("{}", content);
+            } else if let Err(err) = line {
+                eprintln!("Error reading line: {}", err);
             }
         }
 
         Ok(())
     }
-}
 
-impl Running for XunleiUninstall {
-    fn run(self) -> anyhow::Result<()> {
-        if Systemd::support() {
-            Systemd::systemctl(["stop", env::APP_NAME])?;
-            Systemd::systemctl(["disable", env::APP_NAME])?;
-            Systemd::systemctl(["daemon-reload"])?;
-        }
-        self.uninstall()?;
-        Ok(())
-    }
-}
+    let stdout_path = Path::new(DEFAULT_STDOUT_PATH);
+    read_and_print_file(stdout_path, "STDOUT>")?;
 
-impl From<bool> for XunleiUninstall {
-    fn from(value: bool) -> Self {
-        XunleiUninstall { clear: value }
-    }
-}
+    let stderr_path = Path::new(DEFAULT_STDERR_PATH);
+    read_and_print_file(stderr_path, "STDERR>")?;
 
-struct Systemd;
-
-impl Systemd {
-    fn support() -> bool {
-        let child_res = std::process::Command::new("systemctl")
-            .arg("--help")
-            .output();
-
-        let support = match child_res {
-            Ok(output) => output.status.success(),
-            Err(_) => false,
-        };
-        if support.not() {
-            log::warn!("[Systemd] Your system does not support systemctl");
-        }
-        support
-    }
-
-    fn systemctl<I, S>(args: I) -> anyhow::Result<()>
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<std::ffi::OsStr> + std::convert::AsRef<std::ffi::OsStr>,
-    {
-        let output = std::process::Command::new("systemctl")
-            .args(args)
-            .output()?;
-        if output.status.success().not() {
-            log::error!(
-                "[systemctl] {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            );
-        }
-        Ok(())
-    }
+    Ok(())
 }
