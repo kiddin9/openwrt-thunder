@@ -1,14 +1,5 @@
-use std::{
-    io::{BufRead, Read},
-    net::SocketAddr,
-    process::Stdio,
-    str::FromStr,
-    sync::Arc,
-    time::Duration,
-};
-
 use super::{
-    auth::{token, CHECK_AUTH},
+    auth::{token, CHECK_AUTH, EXP},
     error::AppError,
     ext::RequestExt,
     ConfigExt,
@@ -18,13 +9,21 @@ use anyhow::Context;
 use axum::{
     body::{Body, StreamBody},
     extract::State,
-    http::{header, HeaderName, HeaderValue},
+    http::{header, HeaderName, HeaderValue, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
     routing::{any, get, post},
     Form, Json, Router,
 };
 use axum_server::{tls_rustls::RustlsConfig, AddrIncomingConfig, Handle, HttpConfig};
 use serde::Deserialize;
+use std::{
+    io::{BufRead, Read},
+    net::SocketAddr,
+    process::Stdio,
+    str::FromStr,
+    sync::Arc,
+    time::Duration,
+};
 use tokio::io::BufReader;
 use tokio_util::io::ReaderStream;
 
@@ -137,18 +136,19 @@ async fn post_login(user: Form<User>) -> Result<impl IntoResponse, Redirect> {
     if authentication(user.password.as_str()) {
         if let Ok(token) = token::generate_token() {
             let resp = Response::builder()
+                .header(header::LOCATION, env::SYNOPKG_WEB_UI_HOME)
                 .header(
                     header::SET_COOKIE,
-                    format!("{}={}; Path=/", ACCESS_COOKIE, token),
+                    format!("{ACCESS_COOKIE}={token}; Max-Age={EXP}; Path=/; HttpOnly"),
                 )
-                .status(200)
+                .status(StatusCode::SEE_OTHER)
                 .body(Body::empty())
                 .expect("Failed to build response");
             return Ok(resp.into_response());
         }
     }
 
-    Err(Redirect::temporary("/login"))
+    Err(Redirect::to("/login"))
 }
 
 /// GET "/webman/login.cgi" handler
@@ -286,7 +286,10 @@ pub(crate) async fn auth_middleware<B>(
     // extract access_token from cookie
     if let Some(h) = request.headers().get(header::COOKIE) {
         let cookie = h.to_str().unwrap_or_default();
-        let cookie = cookie.split(';').collect::<Vec<&str>>();
+        let cookie = cookie
+            .split(';')
+            .filter(|c| !c.is_empty())
+            .collect::<Vec<&str>>();
         for c in cookie {
             let c = c.trim();
             if c.starts_with(ACCESS_COOKIE) {
@@ -294,13 +297,12 @@ pub(crate) async fn auth_middleware<B>(
                 if token.len() == 2 {
                     // Verify token
                     if token::verifier(token[1]).is_ok() {
-                        let next = next.run(request).await;
-                        return Ok(next);
+                        return Ok(next.run(request).await);
                     }
                 }
             }
         }
     }
 
-    Err(Redirect::temporary("/login"))
+    Err(Redirect::to("/login"))
 }

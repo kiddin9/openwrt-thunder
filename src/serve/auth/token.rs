@@ -1,10 +1,7 @@
 use jsonwebtokens::{encode, Algorithm, AlgorithmID, Verifier};
-use std::{collections::HashMap, sync::OnceLock, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
-use super::CHECK_AUTH;
-
-static TOKEN_SECRET: OnceLock<String> = OnceLock::new();
-pub(super) const EXP: u64 = 3600 * 24;
+use super::{CHECK_AUTH, EXP, TOKEN_SECRET};
 
 fn get_or_init_secret() -> &'static String {
     TOKEN_SECRET.get_or_init(|| {
