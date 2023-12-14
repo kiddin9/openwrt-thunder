@@ -1,3 +1,4 @@
+mod auth;
 mod backend;
 mod error;
 mod ext;
@@ -7,19 +8,10 @@ use std::collections::HashMap;
 
 use crate::{env, Config, Running};
 
-// hasher auth message
-fn hasher_auth_message(s: &str) -> String {
-    use sha3::{Digest, Sha3_512};
-    let mut hasher = Sha3_512::new();
-    hasher.update(s);
-    format!("{:x}", hasher.finalize())
-}
-
 pub(crate) trait ConfigExt {
     /// Get envs
     fn envs(&self) -> anyhow::Result<HashMap<String, String>>;
 }
-
 pub struct Launcher(Config);
 
 impl From<Config> for Launcher {

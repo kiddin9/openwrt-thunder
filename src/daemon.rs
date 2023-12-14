@@ -14,7 +14,6 @@ use crate::Running;
 
 pub struct XunleiInstall {
     description: &'static str,
-    auth_user: Option<String>,
     auth_password: Option<String>,
     host: std::net::IpAddr,
     port: u16,
@@ -37,7 +36,6 @@ impl From<Config> for XunleiInstall {
             config_path: value.config_path,
             uid: value.uid.unwrap_or(nix::unistd::getuid().into()),
             gid: value.gid.unwrap_or(nix::unistd::getgid().into()),
-            auth_user: value.auth_user,
             auth_password: value.auth_password,
             debug: value.debug,
         }
@@ -155,13 +153,10 @@ impl XunleiInstall {
             return Ok(());
         }
 
-        let auth = match self.auth_user.is_some() && self.auth_password.is_some() {
-            true => format!(
-                "--auth-user {} --auth-password {}",
-                self.auth_user.clone().unwrap_or_default(),
-                self.auth_password.clone().unwrap_or_default()
-            ),
-            false => "".to_string(),
+        let auth = if let Some(ref auth_password) = self.auth_password {
+            format!("--auth-password {auth_password}")
+        } else {
+            "".to_string()
         };
 
         let debug = match self.debug {

@@ -56,9 +56,6 @@ pub struct Config {
     /// Enable debug
     #[clap(long, env = "XUNLEI_DEBUG")]
     debug: bool,
-    /// Xunlei authentication username
-    #[arg(short = 'u', long, env = "XUNLEI_AUTH_USER")]
-    auth_user: Option<String>,
     /// Xunlei authentication password
     #[arg(short = 'w', long, env = "XUNLEI_AUTH_PASSWORD")]
     auth_password: Option<String>,

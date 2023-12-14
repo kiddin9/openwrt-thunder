@@ -7,9 +7,16 @@ use std::{
     time::Duration,
 };
 
+use super::{
+    auth::{token, CHECK_AUTH},
+    error::AppError,
+    ext::RequestExt,
+    ConfigExt,
+};
+use crate::{env, Config, Running};
 use anyhow::Context;
 use axum::{
-    body::{Bytes, Full, StreamBody},
+    body::{Body, StreamBody},
     extract::State,
     http::{header, HeaderName, HeaderValue},
     response::{Html, IntoResponse, Redirect, Response},
@@ -18,24 +25,16 @@ use axum::{
 };
 use axum_server::{tls_rustls::RustlsConfig, AddrIncomingConfig, Handle, HttpConfig};
 use serde::Deserialize;
-use tokio::{io::BufReader, sync::OnceCell};
+use tokio::io::BufReader;
 use tokio_util::io::ReaderStream;
 
-use crate::{env, Config, Running};
-
-use super::{error::AppError, ext::RequestExt, hasher_auth_message, ConfigExt};
-
+// Access cookie
+const ACCESS_COOKIE: &'static str = "access_token";
 // Login html
 const LOGIN_HTML: &str = include_str!("../static/login.html");
-// Sha3 js
-const SHA3_JS: &str = include_str!("../static/sha3.min.js");
-
-/// Check auth
-static CHECK_AUTH: OnceCell<(Option<String>, Option<String>)> = OnceCell::const_new();
 
 #[derive(Deserialize)]
 struct User {
-    username: String,
     password: String,
 }
 
@@ -49,18 +48,6 @@ impl Running for FrontendServer {
 
 impl From<Config> for FrontendServer {
     fn from(config: Config) -> Self {
-        let mut config = config;
-
-        // crypto auth user
-        config.auth_user = config
-            .auth_user
-            .map(|auth_user| hasher_auth_message(auth_user.as_str()));
-
-        // crypto auth password
-        config.auth_password = config
-            .auth_password
-            .map(|auth_password| hasher_auth_message(auth_password.as_str()));
-
         Self(config)
     }
 }
@@ -69,16 +56,17 @@ impl FrontendServer {
     #[tokio::main]
     async fn start_server(self) -> anyhow::Result<()> {
         // Set check auth
-        CHECK_AUTH.set((self.0.auth_user.clone(), self.0.auth_password.clone()))?;
+        CHECK_AUTH.set(self.0.auth_password.clone())?;
 
         // router
         let router = Router::new()
-            .route("/login", get(get_login))
-            .route("/login", post(post_login))
-            .route("/js/sha3.min.js", get(get_sha3_js))
             .route("/webman/login.cgi", get(get_webman_login))
             .route("/", any(get_pan_xunlei_com))
             .route("/*path", any(get_pan_xunlei_com))
+            // Need to auth middleware
+            .route_layer(axum::middleware::from_fn(auth_middleware))
+            .route("/login", get(get_login))
+            .route("/login", post(post_login))
             .with_state(Arc::new(self.0.clone()));
 
         // http server config
@@ -132,9 +120,9 @@ impl FrontendServer {
 }
 
 /// Authentication
-fn authentication(auth_user: &str, auth_password: &str) -> bool {
+fn authentication(auth_password: &str) -> bool {
     match CHECK_AUTH.get() {
-        Some((Some(u), Some(p))) => auth_user.eq(u) && auth_password.eq(p),
+        Some(Some(p)) => auth_password.eq(p),
         _ => true,
     }
 }
@@ -145,10 +133,22 @@ async fn get_login() -> Html<&'static str> {
 }
 
 /// POST Login handler
-async fn post_login(user: Form<User>) {
-    if authentication(user.username.as_str(), user.password.as_str()) {
-        // return LOGIN_HTML.to_string();
+async fn post_login(user: Form<User>) -> Result<impl IntoResponse, Redirect> {
+    if authentication(user.password.as_str()) {
+        if let Ok(token) = token::generate_token() {
+            let resp = Response::builder()
+                .header(
+                    header::SET_COOKIE,
+                    format!("{}={}; Path=/", ACCESS_COOKIE, token),
+                )
+                .status(200)
+                .body(Body::empty())
+                .expect("Failed to build response");
+            return Ok(resp.into_response());
+        }
     }
+
+    Err(Redirect::temporary("/login"))
 }
 
 /// GET "/webman/login.cgi" handler
@@ -272,27 +272,35 @@ fn extract_real_host(req: &RequestExt) -> &str {
         .unwrap_or_default()
 }
 
-/// GET "/js/sha3.min.js" handler
-async fn get_sha3_js() -> JavaScript<&'static str> {
-    JavaScript(SHA3_JS)
-}
+use axum::{http::Request, middleware::Next};
 
-#[derive(Clone, Copy, Debug)]
-#[must_use]
-pub struct JavaScript<T>(pub T);
-
-impl<T> IntoResponse for JavaScript<T>
-where
-    T: Into<Full<Bytes>>,
-{
-    fn into_response(self) -> axum::response::Response {
-        (
-            [(
-                header::CONTENT_TYPE,
-                HeaderValue::from_static("application/javascript"),
-            )],
-            self.0.into(),
-        )
-            .into_response()
+pub(crate) async fn auth_middleware<B>(
+    request: Request<B>,
+    next: Next<B>,
+) -> Result<Response, Redirect> {
+    // If CHECK_AUTH is None, return true
+    if let Some(None) = CHECK_AUTH.get() {
+        return Ok(next.run(request).await);
     }
+
+    // extract access_token from cookie
+    if let Some(h) = request.headers().get(header::COOKIE) {
+        let cookie = h.to_str().unwrap_or_default();
+        let cookie = cookie.split(';').collect::<Vec<&str>>();
+        for c in cookie {
+            let c = c.trim();
+            if c.starts_with(ACCESS_COOKIE) {
+                let token = c.split('=').collect::<Vec<&str>>();
+                if token.len() == 2 {
+                    // Verify token
+                    if token::verifier(token[1]).is_ok() {
+                        let next = next.run(request).await;
+                        return Ok(next);
+                    }
+                }
+            }
+        }
+    }
+
+    Err(Redirect::temporary("/login"))
 }
