@@ -63,11 +63,11 @@ impl Running for BackendServer {
             format!("-logfile={}", constant::LAUNCH_LOG_FILE),
         ])
         .current_dir(constant::SYNOPKG_PKGDEST)
+        .envs(envs)
         .uid(self.1.uid)
-        .gid(self.1.gid)
-        .envs(envs);
+        .gid(self.1.gid);
 
-        // If debug is not enabled, the output of the backend service will be redirected to ignore
+        // If debug is false, hide stderr, stdin, stdout
         if !self.0.debug {
             cmd.stderr(Stdio::null())
                 .stdin(Stdio::null())

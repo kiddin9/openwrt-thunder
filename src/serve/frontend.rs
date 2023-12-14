@@ -193,6 +193,11 @@ async fn get_pan_xunlei_com(
         .stdout(Stdio::piped())
         .stdin(Stdio::piped());
 
+    // If debug is false, hide stderr
+    if !conf.0.debug {
+        cmd.stderr(Stdio::null());
+    }
+
     for ele in req.headers.iter() {
         let k = ele.0.as_str().to_ascii_lowercase();
         let v = ele.1;
