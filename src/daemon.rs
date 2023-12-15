@@ -93,12 +93,6 @@ pub(super) fn stop() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Restart the daemon
-pub(super) fn restart() -> anyhow::Result<()> {
-    stop()?;
-    start()
-}
-
 /// Show the status of the daemon
 pub(super) fn status() -> anyhow::Result<()> {
     match get_pid() {

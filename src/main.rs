@@ -37,8 +37,6 @@ pub enum Commands {
     Run(ServeConfig),
     /// Start thunder daemon
     Start(ServeConfig),
-    /// Restart thunder daemon
-    Restart(ServeConfig),
     /// Stop thunder daemon
     Stop,
     /// Show the Http server daemon process
@@ -195,10 +193,6 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Start(config) => {
             daemon::start()?;
-            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
-        }
-        Commands::Restart(config) => {
-            daemon::restart()?;
             serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
         }
         Commands::Stop => {
