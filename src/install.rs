@@ -3,7 +3,6 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Context;
-use log::info;
 use rand::Rng;
 
 use crate::asset::xunlei::Asset;
@@ -19,11 +18,11 @@ impl Running for XunleiInstall {
     fn run(self) -> anyhow::Result<()> {
         // If the package is already installed, skip the installation
         if Path::new(constant::SYNOPKG_VAR).exists() {
-            info!("Already installed");
+            println!("Already installed");
             return Ok(());
         }
 
-        log::info!("Installing in progress");
+        println!("Installing in progress");
 
         // config path
         if self.0.config_path.is_dir().not() {
@@ -58,8 +57,8 @@ impl Running for XunleiInstall {
             )
         }
 
-        log::info!("Config directory: {}", self.0.config_path.display());
-        log::info!("Download directory: {}", self.0.download_path.display());
+        println!("Config directory: {}", self.0.config_path.display());
+        println!("Download directory: {}", self.0.download_path.display());
 
         //  /var/packages/pan-xunlei-com
         let base_dir = Path::new(constant::SYNOPKG_PKGBASE);
@@ -82,7 +81,7 @@ impl Running for XunleiInstall {
             let target_filepath = target_dir.join(filename);
             let data = xunlei.get(filename).context("Read data failure")?;
             util::write_file(&target_filepath, data, 0o755)?;
-            log::info!("Install to: {}", target_filepath.display());
+            println!("Install to: {}", target_filepath.display());
             util::chown(&target_filepath, uid, gid).context(format!(
                 "Failed to set permission: {}, UID:{uid}, UID:{gid}",
                 base_dir.display(),
@@ -165,8 +164,8 @@ impl Running for XunleiInstall {
         // recursive base dir chown
         util::recursive_chown(&base_dir, uid, gid);
 
-        log::info!("Install to: {}, UID:{uid}, GID:{gid}", target_dir.display(),);
-        log::info!("Installation completed");
+        println!("Install to: {}, UID:{uid}, GID:{gid}", target_dir.display(),);
+        println!("Installation completed");
 
         Ok(())
     }
@@ -181,14 +180,14 @@ impl Running for XunleiUninstall {
         let path = Path::new(constant::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
-            log::info!("[XunleiUninstall] Uninstall xunlei package");
+            println!("[XunleiUninstall] Uninstall xunlei package");
         }
 
         fn remove_if_symlink(path: &Path) -> Result<(), std::io::Error> {
             if let Ok(metadata) = std::fs::symlink_metadata(path) {
                 if metadata.file_type().is_symlink() {
                     std::fs::remove_file(path)?;
-                    log::info!("[XunleiUninstall] Uninstall xunlei {}", path.display());
+                    println!("[XunleiUninstall] Uninstall xunlei {}", path.display());
                 }
             }
             Ok(())
