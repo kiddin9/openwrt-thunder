@@ -45,7 +45,7 @@ fi
 ln -s /var/packages/pan-xunlei-com/target/host/etc/synoinfo.conf /etc/synoinfo.conf
 ln -s /var/packages/pan-xunlei-com/target/host/usr/syno/synoman/webman/modules/authenticate.cgi /usr/syno/synoman/webman/modules/authenticate.cgi
 
-dir_list=(/bin /run /lib /usr /mnt /etc /sbin /dev /var /tmp /root /proc /opt/data /downloads /xunlei)
+dir_list=(/bin /run /lib /usr /mnt /etc /sbin /dev /var /tmp /root /proc /opt/data /downloads /thunder)
 for dir in ${dir_list[@]}; do
     mount --bind $dir /rootfs$dir
 done

@@ -13,19 +13,19 @@ RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
     fi
 RUN apk update && apk add wget upx
 RUN mkdir -p /var/packages/pan-xunlei-com/target && chmod 755 /var/packages/pan-xunlei-com/target
-RUN wget https://github.com/gngpp/xunlei/releases/download/v${VERSION}/xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
-RUN tar -xvf xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
-RUN mv xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl/bin/* /var/packages/pan-xunlei-com/target/
-RUN mv xunlei-launcher-${VERSION}-$(cat arch)-unknown-linux-musl/xunlei .
+RUN wget https://github.com/gngpp/thunder/releases/download/v${VERSION}/xunlei-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
+RUN tar -xvf thunder-${VERSION}-$(cat arch)-unknown-linux-musl.tar.gz
+RUN mv thunder-${VERSION}-$(cat arch)-unknown-linux-musl/bin/* /var/packages/pan-xunlei-com/target/
+RUN mv thunder-${VERSION}-$(cat arch)-unknown-linux-musl/thunder .
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-web
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli-launcher.$(cat ali_arch)
 RUN upx --lzma /var/packages/pan-xunlei-com/target/xunlei-pan-cli.$(cat /var/packages/pan-xunlei-com/target/version).$(cat ali_arch)
 
 FROM alpine:latest
 LABEL org.opencontainers.image.authors "gngpp <gngppz@gmail.com>"
-LABEL org.opencontainers.image.source https://github.com/gngpp/xunlei
-LABEL name xunlei
-LABEL url https://github.com/gngpp/xunlei
+LABEL org.opencontainers.image.source https://github.com/gngpp/thunder
+LABEL name thunder
+LABEL url https://github.com/gngpp/thunder
 WORKDIR /rootfs
 
 ARG VERSION
@@ -37,7 +37,7 @@ RUN apk update && apk add bash upx
 
 COPY run.sh /bin/run.sh
 COPY --from=builder /ali_arch /arch
-COPY --from=builder /xunlei /bin/xunlei
+COPY --from=builder /thunder /bin/thunder
 COPY --from=builder /var/packages/pan-xunlei-com/target /var/packages/pan-xunlei-com/target
 
 RUN mkdir -p /rootfs/bin /rootfs/run \
@@ -47,8 +47,8 @@ RUN mkdir -p /rootfs/bin /rootfs/run \
     /rootfs/sys /rootfs/dev \
     /rootfs/var /rootfs/tmp \
     /rootfs/root /rootfs/boot \
-    /rootfs/opt/data /rootfs/downloads /rootfs/xunlei \
-    /opt/data /downloads /xunlei
+    /rootfs/opt/data /rootfs/downloads /rootfs/thunder \
+    /opt/data /downloads /thunder
 
 VOLUME [ "/opt/data", "/downloads" ]
 ENTRYPOINT ["/bin/bash", "+x", "/bin/run.sh"]
