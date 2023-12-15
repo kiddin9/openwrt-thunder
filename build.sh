@@ -10,16 +10,16 @@ for target in ${target_list[@]}; do
 
   # default feature
   cargo zigbuild --release --target=$target
-  upx --lzma target/$target/release/xunlei
+  upx --lzma target/$target/release/thunder
   cargo deb --target=$target --no-build --no-strip
   cd target/$target/release
-  tar czvf xunlei-$tag-$target.tar.gz xunlei
-  shasum -a 256 xunlei-$tag-$target.tar.gz >xunlei-$tag-$target.tar.gz.sha256
-  mv xunlei-$tag-$target.tar.gz $root/uploads/
-  mv xunlei-$tag-$target.tar.gz.sha256 $root/uploads/
+  tar czvf thunder-$tag-$target.tar.gz thunder
+  shasum -a 256 thunder-$tag-$target.tar.gz >thunder-$tag-$target.tar.gz.sha256
+  mv thunder-$tag-$target.tar.gz $root/uploads/
+  mv thunder-$tag-$target.tar.gz.sha256 $root/uploads/
   cd -
   cd target/$target/debian
-  rename 's/.*/xunlei-'$tag'-'$target'.deb/' *.deb
+  rename 's/.*/thunder-'$tag'-'$target'.deb/' *.deb
   mv ./* $root/uploads/
   cd -
 

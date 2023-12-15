@@ -98,9 +98,9 @@ jobs:
       - name: Build Package
         run: |
           set -e
-          echo "src-link xunlei $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
-          echo 'CONFIG_PACKAGE_xunlei=y
-          CONFIG_PACKAGE_luci-app-xunlei=y
+          echo "src-link thunder $GITHUB_WORKSPACE/openwrt" > openwrt-sdk/feeds.conf
+          echo 'CONFIG_PACKAGE_thunder=y
+          CONFIG_PACKAGE_luci-app-thunder=y
           ' >> openwrt-sdk/.config
           cd openwrt-sdk
           cat feeds.conf.default >> feeds.conf
@@ -110,21 +110,21 @@ jobs:
           make defconfig
 
           ./scripts/feeds install -d y -f -a
-          make package/xunlei/compile V=s
-          make package/luci-app-xunlei/compile V=s
+          make package/thunder/compile V=s
+          make package/luci-app-thunder/compile V=s
           tree bin/packages/
       - name: Archive package
         uses: actions/upload-artifact@v3
         with:
-          name: xunlei-launcher-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
+          name: thunder-launcher-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/thunder/thunder*.ipk
           if-no-files-found: error
       - name: Archive luci packages
         if: ${{ matrix.target.arch == 'x86_64' }}
         uses: actions/upload-artifact@v3
         with:
-          name: xunlei-launcher-luci-${{ matrix.target.arch }}
-          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/luci-*.ipk
+          name: thunder-launcher-luci-${{ matrix.target.arch }}
+          path: openwrt-sdk/bin/packages/${{ matrix.target.arch }}/thunder/luci-*.ipk
           if-no-files-found: error
       - name: Upload package to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -132,7 +132,7 @@ jobs:
         with:
           token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/xunlei*.ipk
+            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/thunder/thunder*.ipk
           generate_release_notes: true
       - name: Upload luci packages to GitHub Release
         uses: softprops/action-gh-release@v1
@@ -140,7 +140,7 @@ jobs:
         with:
           token: ${{ secrets.TOKEN }}
           files: |
-            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/xunlei/luci-*.ipk
+            openwrt-sdk/bin/packages/${{ matrix.target.arch }}/thunder/luci-*.ipk
           generate_release_notes: true
 
   docker:

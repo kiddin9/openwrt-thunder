@@ -29,23 +29,19 @@ struct Opt {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Install xunlei
+    /// Install thunder
     Install(InstallConfig),
-    /// Uninstall xunlei
-    Uninstall {
-        /// Clear xunlei default config directory
-        #[clap(short, long)]
-        clear: bool,
-    },
-    /// Run xunlei
+    /// Uninstall thunder
+    Uninstall,
+    /// Run thunder
     Run(ServeConfig),
-    /// Start xunlei daemon
+    /// Start thunder daemon
     Start(ServeConfig),
-    /// Restart xunlei daemon
+    /// Restart thunder daemon
     Restart(ServeConfig),
-    /// Stop xunlei daemon
+    /// Stop thunder daemon
     Stop,
-    /// Status of the Http server daemon process
+    /// Show the Http server daemon process
     Status,
     /// Show the Http server daemon log
     Log,
@@ -59,7 +55,7 @@ pub struct InstallConfig {
     /// Thunder GID permission
     #[clap(short = 'G', long, env = "THUNDER_GID", default_value = "0")]
     gid: u32,
-    /// Install xunlei from package
+    /// Install thunder from package
     package: Option<PathBuf>,
     /// Thunder config directory
     #[clap(short, long, default_value = constant::DEFAULT_CONFIG_PATH)]
@@ -73,7 +69,16 @@ pub struct InstallConfig {
 }
 
 impl InstallConfig {
-    const P: &'static str = ".xunlei";
+    const P: &'static str = ".thunder";
+
+    /// Remove config file
+    pub fn remove_file(self) -> anyhow::Result<()> {
+        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        if path.exists() {
+            std::fs::remove_file(&path)?;
+        }
+        Ok(())
+    }
 
     /// Write to file
     fn write_to_file(&self) -> anyhow::Result<()> {
@@ -181,8 +186,9 @@ fn main() -> anyhow::Result<()> {
             config.write_to_file()?;
             install::XunleiInstall(config).run()?;
         }
-        Commands::Uninstall { clear } => {
-            install::XunleiUninstall(clear).run()?;
+        Commands::Uninstall => {
+            let install_config = InstallConfig::read_from_file().map_or(None, |v| Some(v));
+            install::XunleiUninstall(install_config).run()?;
         }
         Commands::Run(config) => {
             serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;

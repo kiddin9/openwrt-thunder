@@ -61,8 +61,8 @@ impl FrontendServer {
         // router
         let router = Router::new()
             .route("/webman/login.cgi", get(get_webman_login))
-            .route("/", any(get_pan_xunlei_com))
-            .route("/*path", any(get_pan_xunlei_com))
+            .route("/", any(get_pan_thunder_com))
+            .route("/*path", any(get_pan_thunder_com))
             // Need to auth middleware
             .route_layer(axum::middleware::from_fn(auth_middleware))
             .route("/login", get(get_login))
@@ -157,8 +157,8 @@ async fn get_webman_login() -> Json<&'static str> {
     Json(r#"{"SynoToken", ""}"#)
 }
 
-/// Any "/webman/3rdparty/pan-xunlei-com/index.cgi/" handler
-async fn get_pan_xunlei_com(
+/// Any "/webman/3rdparty/pan-thunder-com/index.cgi/" handler
+async fn get_pan_thunder_com(
     State(conf): State<Arc<(ServeConfig, InstallConfig)>>,
     req: RequestExt,
 ) -> Result<impl IntoResponse, AppError> {

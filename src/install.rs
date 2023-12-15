@@ -18,7 +18,7 @@ impl Running for XunleiInstall {
     fn run(self) -> anyhow::Result<()> {
         // If the package is already installed, skip the installation
         if Path::new(constant::SYNOPKG_VAR).exists() {
-            println!("Already installed");
+            println!("Thunder already installed");
             return Ok(());
         }
 
@@ -172,7 +172,7 @@ impl Running for XunleiInstall {
 }
 
 /// Uninstall xunlei
-pub struct XunleiUninstall(pub bool);
+pub struct XunleiUninstall(pub Option<InstallConfig>);
 
 impl Running for XunleiUninstall {
     fn run(self) -> anyhow::Result<()> {
@@ -180,14 +180,14 @@ impl Running for XunleiUninstall {
         let path = Path::new(constant::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
-            println!("Uninstall xunlei package");
+            println!("Uninstall thunder package");
         }
 
         fn remove_if_symlink(path: &Path) -> Result<(), std::io::Error> {
             if let Ok(metadata) = std::fs::symlink_metadata(path) {
                 if metadata.file_type().is_symlink() {
                     std::fs::remove_file(path)?;
-                    println!("Uninstall xunlei {}", path.display());
+                    println!("Uninstall thunder {}", path.display());
                 }
             }
             Ok(())
@@ -198,11 +198,12 @@ impl Running for XunleiUninstall {
         remove_if_symlink(Path::new(constant::SYNO_AUTHENTICATE_PATH))?;
 
         // Clear xunlei default config directory
-        if self.0 {
-            let path = Path::new(constant::DEFAULT_CONFIG_PATH);
+        if let Some(install_config) = self.0 {
+            let path = install_config.config_path.as_path();
             if path.exists() {
-                std::fs::remove_dir_all(Path::new(path))?
+                std::fs::remove_dir_all(path)?
             }
+            install_config.remove_file()?;
         }
 
         Ok(())

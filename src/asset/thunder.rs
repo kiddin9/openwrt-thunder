@@ -3,6 +3,7 @@ use std::{
     borrow::Cow,
     fs::File,
     io::{Read, Write},
+    ops::Not,
     path::{Path, PathBuf},
 };
 
@@ -18,12 +19,16 @@ pub struct Asset {
 
 impl Asset {
     pub fn new(package: Option<PathBuf>) -> anyhow::Result<Self> {
-        let xunlei = Asset {
-            tmp_path: PathBuf::from("/tmp/xunlei_bin"),
+        let tmp_path = PathBuf::from("/tmp/xunlei_bin");
+        tmp_path
+            .exists()
+            .not()
+            .then(|| std::fs::create_dir_all(&tmp_path));
+        Ok(Asset {
+            tmp_path,
             filename: format!("nasxunlei-DSM7-{}.spk", crate::constant::SUPPORT_ARCH),
             package,
-        };
-        Ok(xunlei)
+        })
     }
 
     pub fn init(&self) -> anyhow::Result<()> {
