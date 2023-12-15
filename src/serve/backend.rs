@@ -60,7 +60,7 @@ impl Running for BackendServer {
         // environment variables
         let envs = (&self.0, &self.1).envs()?;
 
-        log::info!("Start Xunlei Backend Server");
+        log::info!("Start Thunder Backend Server");
         let mut cmd = std::process::Command::new(constant::LAUNCHER_EXE);
         cmd.args([
             format!("-launcher_listen={}", constant::LAUNCHER_SOCK),
@@ -84,7 +84,7 @@ impl Running for BackendServer {
 
         // Backend service PID
         let backend_pid = backend_process.id() as i32;
-        log::info!("Xunlei Backend Server PID: {backend_pid}");
+        log::info!("Thunder Backend Server PID: {backend_pid}");
 
         let mut signals = Signals::new([
             signal_hook::consts::SIGINT,

@@ -53,21 +53,21 @@ pub enum Commands {
 
 #[derive(Args, Clone)]
 pub struct InstallConfig {
-    /// Xunlei UID permission
-    #[clap(short = 'U', long, env = "XUNLEI_UID", default_value = "0")]
+    /// Thunder UID permission
+    #[clap(short = 'U', long, env = "THUNDER_UID", default_value = "0")]
     uid: u32,
-    /// Xunlei GID permission
-    #[clap(short = 'G', long, env = "XUNLEI_GID", default_value = "0")]
+    /// Thunder GID permission
+    #[clap(short = 'G', long, env = "THUNDER_GID", default_value = "0")]
     gid: u32,
     /// Install xunlei from package
     package: Option<PathBuf>,
-    /// Xunlei config directory
+    /// Thunder config directory
     #[clap(short, long, default_value = constant::DEFAULT_CONFIG_PATH)]
     config_path: PathBuf,
-    /// Xunlei download directory
+    /// Thunder download directory
     #[clap(short, long, default_value = constant::DEFAULT_DOWNLOAD_PATH)]
     download_path: PathBuf,
-    /// Xunlei mount bind download directory
+    /// Thunder mount bind download directory
     #[clap(short, long, default_value = constant::DEFAULT_BIND_DOWNLOAD_PATH)]
     mount_bind_download_path: PathBuf,
 }
@@ -151,20 +151,25 @@ impl InstallConfig {
 }
 #[derive(Args, Clone)]
 pub struct ServeConfig {
-    /// Enable debug
-    #[clap(long, env = "XUNLEI_DEBUG")]
+    /// enable debug
+    #[clap(long, env = "THUNDER_DEBUG")]
     debug: bool,
-    /// Xunlei authentication password
-    #[arg(short = 'w', long, env = "XUNLEI_AUTH_PASS")]
+    /// Authentication password
+    #[arg(short = 'w', long, env = "THUNDER_AUTH_PASS")]
     auth_password: Option<String>,
-    /// Xunlei bind address
-    #[clap(short = 'B', long, env = "XUNLEI_BIND", default_value = "0.0.0.0:5055")]
+    /// Thunder server bind address
+    #[clap(
+        short = 'B',
+        long,
+        env = "THUNDER_BIND",
+        default_value = "0.0.0.0:5055"
+    )]
     bind: SocketAddr,
     /// TLS certificate file
-    #[clap(short = 'C', long, env = "XUNLEI_TLS_CERT")]
+    #[clap(short = 'C', long, env = "THUNDER_TLS_CERT")]
     tls_cert: Option<PathBuf>,
     /// TLS private key file
-    #[clap(short = 'K', long, env = "XUNLEI_TLS_KEY")]
+    #[clap(short = 'K', long, env = "THUNDER_TLS_KEY")]
     tls_key: Option<PathBuf>,
 }
 

@@ -1,11 +1,11 @@
 [package]
-name = "xunlei"
+name = "thunder"
 version = "3.11.2-32"
 edition = "2021"
 description = "Synology Nas Thunder runs on Linux"
 license = "MIT"
-homepage = "https://github.com/gngpp/xunlei"
-repository = "https://github.com/gngpp/xunlei.git"
+homepage = "https://github.com/gngpp/thunder"
+repository = "https://github.com/gngpp/thunder.git"
 readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -40,7 +40,7 @@ default = ["mimalloc"]
 mimalloc = ["dep:mimalloc"]
 
 [[bin]]
-name = "xunlei"
+name = "thunder"
 path = "src/main.rs"
 
 [profile.dev]
@@ -62,12 +62,12 @@ depends = "$auto"
 section = "utility"
 priority = "optional"
 assets = [
-    ["target/release/xunlei", "usr/bin/xunlei", "755"],
-    ["README.md", "usr/share/doc/xunlei/README", "644"],
+    ["target/release/thunder", "usr/bin/thunder", "755"],
+    ["README.md", "usr/share/doc/thunder/README", "644"],
 ]
 
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/xunlei", dest = "/usr/bin/xunlei", mode = "0755" },
-    { source = "LICENSE", dest = "/usr/share/doc/xunlei/LICENSE", doc = true, mode = "0644" }
+    { source = "target/release/thunder", dest = "/usr/bin/thunder", mode = "0755" },
+    { source = "LICENSE", dest = "/usr/share/doc/thunder/LICENSE", doc = true, mode = "0644" }
 ]

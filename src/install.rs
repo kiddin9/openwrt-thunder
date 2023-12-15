@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use rand::Rng;
 
-use crate::asset::xunlei::Asset;
+use crate::asset::thunder::Asset;
 use crate::constant;
 use crate::util;
 use crate::InstallConfig;

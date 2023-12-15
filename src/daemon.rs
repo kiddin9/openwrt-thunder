@@ -8,15 +8,12 @@ use std::{
     path::Path,
 };
 
-#[cfg(target_family = "unix")]
-pub(crate) const PID_PATH: &str = "/var/run/xunlei.pid";
-#[cfg(target_family = "unix")]
-pub(crate) const DEFAULT_STDOUT_PATH: &str = "/var/run/xunlei.out";
-#[cfg(target_family = "unix")]
-pub(crate) const DEFAULT_STDERR_PATH: &str = "/var/run/xunlei.err";
-#[cfg(target_family = "unix")]
-pub(crate) const DEFAULT_WORK_DIR: &str = "/";
+const PID_PATH: &str = "/var/run/thunder.pid";
+const DEFAULT_STDOUT_PATH: &str = "/var/run/thunder.out";
+const DEFAULT_STDERR_PATH: &str = "/var/run/thunder.err";
+const DEFAULT_WORK_DIR: &str = "/";
 
+/// Check if the user is root
 pub fn check_root() {
     if !nix::unistd::Uid::effective().is_root() {
         println!("You must run this executable with root permissions");
@@ -24,6 +21,7 @@ pub fn check_root() {
     }
 }
 
+/// Get the pid of the daemon
 pub(crate) fn get_pid() -> Option<String> {
     if let Ok(data) = std::fs::read(PID_PATH) {
         let binding = String::from_utf8(data).expect("pid file is not utf8");
@@ -32,14 +30,14 @@ pub(crate) fn get_pid() -> Option<String> {
     None
 }
 
+/// Start the daemon
 pub(super) fn start() -> anyhow::Result<()> {
-    // Check user is root
-    check_root();
-
     if let Some(pid) = get_pid() {
-        println!("Ninja is already running with pid: {}", pid);
+        println!("Thunder is already running with pid: {}", pid);
         return Ok(());
     }
+
+    check_root();
 
     let pid_file = File::create(PID_PATH)?;
     pid_file.set_permissions(Permissions::from_mode(0o755))?;
@@ -74,6 +72,7 @@ pub(super) fn start() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Stop the daemon
 pub(super) fn stop() -> anyhow::Result<()> {
     use nix::sys::signal;
     use nix::unistd::Pid;
@@ -94,19 +93,22 @@ pub(super) fn stop() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Restart the daemon
 pub(super) fn restart() -> anyhow::Result<()> {
     stop()?;
     start()
 }
 
+/// Show the status of the daemon
 pub(super) fn status() -> anyhow::Result<()> {
     match get_pid() {
-        Some(pid) => println!("Xunlei is running with pid: {}", pid),
-        None => println!("Xunlei is not running"),
+        Some(pid) => println!("Thunder is running with pid: {}", pid),
+        None => println!("Thunder is not running"),
     }
     Ok(())
 }
 
+/// Show the log of the daemon
 pub(super) fn log() -> anyhow::Result<()> {
     fn read_and_print_file(file_path: &Path, placeholder: &str) -> anyhow::Result<()> {
         if !file_path.exists() {

@@ -1,8 +1,10 @@
+/// Platform Architecture
 #[cfg(target_arch = "aarch64")]
 pub const SUPPORT_ARCH: &str = "armv8";
 #[cfg(target_arch = "x86_64")]
 pub const SUPPORT_ARCH: &str = "x86_64";
-pub const APP_NAME: &str = "xunlei";
+
+/// Environment Variable
 pub const SYNO_AUTHENTICATE_PATH: &str = "/usr/syno/synoman/webman/modules/authenticate.cgi";
 pub const SYNO_INFO_PATH: &str = "/etc/synoinfo.conf";
 pub const SYNOPKG_DSM_VERSION_MAJOR: &str = "7";
@@ -33,7 +35,11 @@ pub const LAUNCH_PID_FILE: &str =
 pub const LAUNCH_LOG_FILE: &str =
     "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com-launcher.log";
 pub const INST_LOG: &str = "/var/packages/pan-xunlei-com/target/var/pan-xunlei-com_install.log";
+
+/// Web UI request path
 pub const SYNOPKG_WEB_UI_HOME: &str = "/webman/3rdparty/pan-xunlei-com/index.cgi/";
-pub const DEFAULT_DOWNLOAD_PATH: &str = "/opt/xunlei/downloads";
-pub const DEFAULT_BIND_DOWNLOAD_PATH: &str = "/xunlei";
-pub const DEFAULT_CONFIG_PATH: &str = "/opt/xunlei";
+
+/// Default Config path
+pub const DEFAULT_DOWNLOAD_PATH: &str = "/opt/thunder/downloads";
+pub const DEFAULT_BIND_DOWNLOAD_PATH: &str = "/thunder";
+pub const DEFAULT_CONFIG_PATH: &str = "/opt/thunder";
