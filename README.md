@@ -6,7 +6,7 @@
   <a href="https://github.com/gngpp/thunder/releases">
     <img src="https://img.shields.io/github/release/gngpp/thunder.svg?style=flat">
   </a><a href="hhttps://github.com/gngpp/thunder/releases">
-    <img src="https://img.shields.io/github/downloads/gngpp//total?style=flat&?">
+    <img src="https://img.shields.io/github/downloads/gngpp/xunlei/total?style=flat&?">
   </a>
   [![Docker Image](https://img.shields.io/docker/pulls/gngpp/xunlei.svg)](https://hub.docker.com/r/gngpp/xunlei/)
 
