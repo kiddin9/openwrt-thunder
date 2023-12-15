@@ -34,28 +34,21 @@ impl Running for BackendServer {
         #[cfg(target_os = "linux")]
         let _ = nix::mount::umount(&self.1.mount_bind_download_path);
         #[cfg(target_os = "linux")]
-        match nix::mount::mount(
+        if nix::mount::mount(
             Some(&self.1.download_path),
             &self.1.mount_bind_download_path,
             <Option<&'static [u8]>>::None,
             MsFlags::MS_BIND,
             <Option<&'static [u8]>>::None,
-        ) {
-            Ok(_) => {
-                log::info!(
-                    "Mount {} to {} succeeded",
-                    self.1.download_path.display(),
-                    self.1.mount_bind_download_path.display()
-                )
-            }
-            Err(_) => {
-                anyhow::bail!(
-                    "Mount {} to {} failed",
-                    self.1.download_path.display(),
-                    self.1.mount_bind_download_path.display()
-                );
-            }
-        };
+        )
+        .is_err()
+        {
+            anyhow::bail!(
+                "Mount {} to {} failed",
+                self.1.download_path.display(),
+                self.1.mount_bind_download_path.display()
+            );
+        }
 
         // environment variables
         let envs = (&self.0, &self.1).envs()?;
@@ -120,20 +113,12 @@ impl Running for BackendServer {
 
         // umount bind directory
         #[cfg(target_os = "linux")]
-        match nix::mount::umount(&self.1.mount_bind_download_path) {
-            Ok(_) => {
-                log::info!(
-                    "Unmount {} succeeded",
-                    self.1.mount_bind_download_path.display()
-                )
-            }
-            Err(_) => {
-                log::error!(
-                    "Unmount {} failed",
-                    self.1.mount_bind_download_path.display()
-                )
-            }
-        };
+        if nix::mount::umount(&self.1.mount_bind_download_path).is_err() {
+            log::error!(
+                "Unmount {} failed",
+                self.1.mount_bind_download_path.display()
+            )
+        }
 
         Ok(())
     }

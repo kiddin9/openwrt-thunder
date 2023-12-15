@@ -3,6 +3,8 @@ mod backend;
 mod error;
 mod ext;
 mod frontend;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 use crate::{
     constant,
     serve::{backend::BackendServer, frontend::FrontendServer},
@@ -28,6 +30,22 @@ impl Running for Serve {
 
         let serve_config = self.0.clone();
         let install_config = self.1.clone();
+
+        // Set the log level
+        if serve_config.debug {
+            std::env::set_var("RUST_LOG", "debug");
+        } else {
+            std::env::set_var("RUST_LOG", "info");
+        }
+
+        // Init log
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "RUST_LOG=info".into()),
+            )
+            .with(tracing_subscriber::fmt::layer())
+            .init();
 
         // http server signal
         let (tx, rx) = tokio::sync::mpsc::channel::<()>(1);

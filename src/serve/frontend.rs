@@ -25,6 +25,8 @@ use std::{
 };
 use tokio::io::BufReader;
 use tokio_util::io::ReaderStream;
+use tower_http::trace;
+use tracing::Level;
 
 // Access cookie
 const ACCESS_COOKIE: &'static str = "access_token";
@@ -55,6 +57,8 @@ impl FrontendServer {
 
     #[tokio::main]
     async fn start_server(self) -> anyhow::Result<()> {
+        log::info!("Starting frontend server: {}", self.0.bind);
+
         // Set check auth
         CHECK_AUTH.set(self.0.auth_password.clone())?;
 
@@ -67,6 +71,13 @@ impl FrontendServer {
             .route_layer(axum::middleware::from_fn(auth_middleware))
             .route("/login", get(get_login))
             .route("/login", post(post_login))
+            .layer(
+                tower_http::trace::TraceLayer::new_for_http()
+                    .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                    .on_response(trace::DefaultOnResponse::new().level(Level::INFO))
+                    .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
+                    .on_failure(trace::DefaultOnFailure::new().level(Level::WARN)),
+            )
             .with_state(Arc::new((self.0.clone(), self.1.clone())));
 
         // http server config
