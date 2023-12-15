@@ -85,7 +85,9 @@ impl FrontendServer {
         // Signal the server to shutdown using Handle.
         let handle = Handle::new();
 
-        graceful_shutdown_signal(handle.clone(), self.2).await;
+        // Wait for the server to shutdown gracefully
+        tokio::spawn(graceful_shutdown_signal(handle.clone(), self.2));
+
         // If tls_cert and tls_key is not None, use https
         let result = match (self.0.tls_cert, self.0.tls_key) {
             (Some(cert), Some(key)) => {
@@ -318,9 +320,9 @@ async fn graceful_shutdown_signal(
 ) {
     tokio::select! {
         _ = graceful_shutdown.recv() => {
-            log::info!("Http Server shutdown");
-                // Wait for the server to shutdown gracefully
-            handle.graceful_shutdown(Some(Duration::from_secs(30)));
+            println!("Received signal to shutdown");
+            handle.shutdown();
+            return ;
         }
     }
 }
