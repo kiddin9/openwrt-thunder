@@ -25,89 +25,58 @@ thunder从迅雷群晖套件中提取，用于发行版Linux（支持OpenWrt/Alp
 
 ```shell
 ❯ ./thunder                   
-Synology Nas Thunder runs on Linux
+Synology NAS thunder run on Linux
 
-Usage: thunder [OPTIONS] <COMMAND>
+Usage: thunder
+       thunder <COMMAND>
 
 Commands:
   install    Install thunder
   uninstall  Uninstall thunder
-  launcher   Launcher thunder
+  run        Run thunder
+  start      Start thunder daemon
+  stop       Stop thunder daemon
+  status     Show the Http server daemon process
+  log        Show the Http server daemon log
   help       Print this message or the help of the given subcommand(s)
 
 Options:
-  -d, --debug    Enable debug
   -h, --help     Print help
   -V, --version  Print version
-
-❯ ./thunder install --help
-Install thunder
-
-Usage: thunder install [OPTIONS]
-
-Options:
-      --debug
-          Enable debug [env: XUNLEI_DEBUG=]
-  -u, --auth-user <AUTH_USER>
-          Xunlei authentication username [env: XUNLEI_AUTH_USER=]
-  -w, --auth-password <AUTH_PASSWORD>
-          Xunlei authentication password [env: XUNLEI_AUTH_PASSWORD=]
-  -H, --host <HOST>
-          Xunlei Listen host [env: XUNLEI_HOST=] [default: 0.0.0.0]
-  -P, --port <PORT>
-          Xunlei Listen port [env: XUNLEI_PORT=] [default: 5055]
-  -U, --uid <UID>
-          Xunlei UID permission [env: XUNLEI_UID=]
-  -G, --gid <GID>
-          Xunlei GID permission [env: XUNLEI_GID=]
-  -c, --config-path <CONFIG_PATH>
-          Xunlei config directory [default: /opt/thunder]
-  -d, --download-path <DOWNLOAD_PATH>
-          Xunlei download directory [default: /opt/thunder/downloads]
-  -m, --mount-bind-download-path <MOUNT_BIND_DOWNLOAD_PATH>
-          Xunlei mount bind download directory [default: /thunder]
-  -h, --help
-          Print help
-
 ```
 
 ### Ubuntu(Other Linux)
-GitHub [Releases](https://github.com/gngpp/thunder/releases) 中有预编译的 deb包/rpm包，二进制文件，以Ubuntu为例：
+
+GitHub [Releases](https://github.com/gngpp/thunder/releases) 中有预编译的 deb包，二进制文件，以Ubuntu为例：
+
 ```shell
-wget https://github.com/gngpp/thunder/releases/download/v3.11.2-32/thunder-embed-3.11.2-32-aarch64-unknown-linux-gnu.deb
+wget https://github.com/gngpp/thunder/releases/download/v1.0.0/thunder-embed-1.0.0-aarch64-unknown-linux-gnu.deb
 
-dpkg -i thunder_3.11.2-32_amd64.deb
+dpkg -i thunder_1.0.0_amd64.deb
 
-# 安装和运行迅雷程序
+# 安装迅雷，默认在线下载安装，如果需要设置更多参数请带上`-h`，查看说明
 thunder install
-# 停止和卸载迅雷程序
+
+# 安装迅雷以指定spk包安装，如果需要设置更多参数请带上`-h`，查看说明
+thunder install /root/nasxunlei-DSM7-x86_64.spk
+
+# 卸载迅雷
 thunder uninstall
-# 如果你的系统不支持systemd，则手动启动
-thunder launcher
-```
 
-### Docker 运行
+# 前台运行迅雷，如果需要设置更多参数请带上`-h`，查看说明
+thunder run 
 
-```bash
-docker run -it --rm --privileged -p 5055:5055 --name=xunlei \
-  -v $(pwd)/data:/opt/data \
-  -v $(pwd)/downloads:/downloads \
-  -e XUNLEI_AUTH_USER=admin \
-  -e XUNLEI_AUTH_PASSWORD=admin \
-  gngpp/xunlei:latest
-```
+# 后台运行迅雷，如果需要设置更多参数请带上`-h`，查看说明
+thunder start
 
-### OpenWrt 路由器
-GitHub [Releases](https://github.com/gngpp/thunder/releases) 中有预编译的 ipk 文件， 目前提供了 aarch64/x86_64 等架构的版本，下载后使用 opkg 安装，以 nanopi r4s 为例：
+# 停止运行迅雷
+thunder stop
 
-```shell
-wget https://github.com/gngpp/thunder/releases/download/v3.11.2-32/thunder_3.11.2-32_aarch64_generic.ipk
-wget https://github.com/gngpp/thunder/releases/download/v3.11.2-32/luci-app-thunder_1.0.1-7-1_all.ipk
-wget https://github.com/gngpp/thunder/releases/download/v3.11.2-32/luci-i18n-thunder-zh-cn_1.0.1-7-1_all.ipk
+# 查看运行状态
+thunder status
 
-opkg install thunder_3.11.2-32_aarch64_generic.ipk
-opkg install luci-app-thunder_1.0.1-7-1_all.ipk
-opkg install luci-i18n-thunder-zh-cn_1.0.1-7-1_all.ipk
+# 查看运行日志
+thunder log
 ```
 
 ### 自行编译
@@ -115,27 +84,12 @@ opkg install luci-i18n-thunder-zh-cn_1.0.1-7-1_all.ipk
 ```shell
 git clone https://github.com/gngpp/thunder && cd thunder
 
-# 默认编译在线安装
 cargo build --release && mv target/release/thunder .
-
-# 执行安装
-./thunder install
-# 若系统不支持systemd，则手动启动daemon
-./thunder launcher
 ```
 
-### OpenWrt编译
-
-```shell
-cd package
-svn co https://github.com/gngpp/thunder/trunk/openwrt
-cd -
-make menuconfig # choose LUCI->Applications->luci-app-thunder  
-make V=s
-```
 
 ### FQA
- - openwrt如果启动有问题，先执行`service thunder disable && service thunder enable`，清除以前安装过的迅雷包缓存（可能别人打包也叫thunder，会有init.d缓存），不行再开debug模式看日志，最好新装重启一次
+ - 当前大重构，`OpenWrt` / `Docker` 后续再完善支持
  - musl运行库的操作系统，若已存在glibc运行库，那么会优先兼容选择使用操作系统运行库环境（避免对系统其他软件依赖冲突，可能会缺依赖，自行补全）
  - 指定运行LD加载库或压缩目前无法做到（二进制带签名），需要逆向打patch
  - 插件依赖bash，系统需要安装bash

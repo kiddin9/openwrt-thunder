@@ -1,8 +1,8 @@
 [package]
 name = "thunder"
-version = "3.11.2-32"
+version = "1.0.0"
 edition = "2021"
-description = "Synology Nas Thunder runs on Linux"
+description = "Synology NAS thunder run on Linux"
 license = "MIT"
 homepage = "https://github.com/gngpp/thunder"
 repository = "https://github.com/gngpp/thunder.git"
@@ -58,7 +58,7 @@ strip = true
 maintainer = "gngpp <gngppz@gmail.com>"
 copyright = "2023, gngpp <gngppz@gmail.com>"
 license-file = ["LICENSE", "4"]
-extended-description = "Synology Nas Thunder runs on Linux"
+extended-description = "Synology NAS thunder run on Linux"
 depends = "$auto"
 section = "utility"
 priority = "optional"
