@@ -3,10 +3,12 @@ mod backend;
 mod error;
 mod ext;
 mod frontend;
-
+use crate::{
+    constant,
+    serve::{backend::BackendServer, frontend::FrontendServer},
+    InstallConfig, Running, ServeConfig,
+};
 use std::collections::HashMap;
-
-use crate::{constant, InstallConfig, Running, ServeConfig};
 
 pub(crate) trait ConfigExt {
     /// Get envs
@@ -27,28 +29,32 @@ impl Running for Serve {
         let serve_config = self.0.clone();
         let install_config = self.1.clone();
 
-        let backend_thread: JoinHandle<_> = Builder::new()
-            .name("backend".to_string())
-            .spawn(
-                move || match backend::BackendServer::new(serve_config, install_config).run() {
-                    Ok(_) => {}
-                    Err(e) => log::error!("error: {}", e),
-                },
-            )
-            .expect("[XunleiLauncher] Failed to start backend thread");
+        // http server signal
+        let (tx, rx) = tokio::sync::mpsc::channel::<()>(1);
 
-        std::thread::spawn(
-            move || match frontend::FrontendServer::new(self.0, self.1).run() {
-                Ok(_) => {}
-                Err(e) => log::error!("error: {}", e),
-            },
-        );
+        // Start backend thread
+        let backend_thread: JoinHandle<_> = Builder::new().spawn(move || {
+            if let Some(err) = BackendServer::new(serve_config, install_config, tx)
+                .run()
+                .err()
+            {
+                log::error!("error: {}", err);
+            }
+        })?;
 
+        // Start frontend thread
+        std::thread::spawn(move || {
+            if let Some(err) = FrontendServer::new(self.0, self.1, rx).run().err() {
+                log::error!("error: {}", err);
+            }
+        });
+
+        // Wait for backend thread to finish
         backend_thread
             .join()
-            .expect("[XunleiLauncher] Failed to join thread");
+            .expect("Failed to join backend thread");
 
-        log::info!("[XunleiLauncher] All services have been complete");
+        log::info!("All services have been complete");
         Ok(())
     }
 }

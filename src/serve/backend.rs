@@ -1,5 +1,6 @@
 #[cfg(target_os = "linux")]
 use nix::mount::MsFlags;
+use nix::sys::signal;
 use nix::unistd::Pid;
 use signal_hook::iterator::Signals;
 use std::os::unix::process::CommandExt;
@@ -9,11 +10,15 @@ use crate::{constant, InstallConfig, Running};
 use crate::{util, ServeConfig};
 use std::{ops::Not, path::Path, process::Stdio};
 
-pub(super) struct BackendServer(ServeConfig, InstallConfig);
+pub(super) struct BackendServer(ServeConfig, InstallConfig, tokio::sync::mpsc::Sender<()>);
 
 impl BackendServer {
-    pub(super) fn new(serve_config: ServeConfig, install_config: InstallConfig) -> Self {
-        Self(serve_config, install_config)
+    pub(super) fn new(
+        serve_config: ServeConfig,
+        install_config: InstallConfig,
+        graceful_shutdown: tokio::sync::mpsc::Sender<()>,
+    ) -> Self {
+        Self(serve_config, install_config, graceful_shutdown)
     }
 }
 
@@ -87,24 +92,24 @@ impl Running for BackendServer {
             signal_hook::consts::SIGTERM,
         ])?;
 
+        // Receive signal
         for signal in signals.forever() {
             match signal {
                 signal_hook::consts::SIGINT
                 | signal_hook::consts::SIGHUP
                 | signal_hook::consts::SIGTERM => {
-                    match nix::sys::signal::kill(
-                        Pid::from_raw(backend_pid),
-                        nix::sys::signal::SIGINT,
-                    ) {
-                        Ok(_) => {
-                            log::info!("The backend service has been terminated")
-                        }
-                        Err(_) => {
-                            nix::sys::signal::kill(Pid::from_raw(backend_pid),
-                            nix::sys::signal::SIGTERM).expect(&format!("The backend kill error: {}, An attempt was made to send SIGTERM to continue terminating",
-                                                        std::io::Error::last_os_error()));
-                        }
+                    // Send a signal to the backend service to terminate
+                    self.2.blocking_send(())?;
+
+                    let kill_pid = Pid::from_raw(backend_pid);
+
+                    // Wait for the backend service to terminate
+                    let kill = signal::kill(kill_pid, signal::SIGINT);
+                    if let Some(err) = kill.err() {
+                        log::error!("The backend kill error: {}", err);
+                        signal::kill(kill_pid, signal::SIGTERM)?;
                     }
+
                     break;
                 }
                 _ => {

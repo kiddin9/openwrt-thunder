@@ -36,7 +36,7 @@ struct User {
     password: String,
 }
 
-pub(super) struct FrontendServer(ServeConfig, InstallConfig);
+pub(super) struct FrontendServer(ServeConfig, InstallConfig, tokio::sync::mpsc::Receiver<()>);
 
 impl Running for FrontendServer {
     fn run(self) -> anyhow::Result<()> {
@@ -45,8 +45,12 @@ impl Running for FrontendServer {
 }
 
 impl FrontendServer {
-    pub(super) fn new(serve_config: ServeConfig, install_config: InstallConfig) -> Self {
-        Self(serve_config, install_config)
+    pub(super) fn new(
+        serve_config: ServeConfig,
+        install_config: InstallConfig,
+        graceful_shutdown: tokio::sync::mpsc::Receiver<()>,
+    ) -> Self {
+        Self(serve_config, install_config, graceful_shutdown)
     }
 
     #[tokio::main]
@@ -81,12 +85,12 @@ impl FrontendServer {
         // Signal the server to shutdown using Handle.
         let handle = Handle::new();
 
+        graceful_shutdown_signal(handle.clone(), self.2).await;
         // If tls_cert and tls_key is not None, use https
         let result = match (self.0.tls_cert, self.0.tls_key) {
             (Some(cert), Some(key)) => {
-                let tls_config = RustlsConfig::from_pem_file(cert, key)
-                    .await
-                    .expect("Failed to load TLS keypair");
+                // Load tls config
+                let tls_config = RustlsConfig::from_pem_file(cert, key).await?;
 
                 axum_server::bind_rustls(self.0.bind, tls_config)
                     .handle(handle)
@@ -273,6 +277,7 @@ fn extract_real_host(req: &RequestExt) -> &str {
 
 use axum::{http::Request, middleware::Next};
 
+/// Auth middleware
 pub(crate) async fn auth_middleware<B>(
     request: Request<B>,
     next: Next<B>,
@@ -304,4 +309,18 @@ pub(crate) async fn auth_middleware<B>(
     }
 
     Err(Redirect::to("/login"))
+}
+
+/// Graceful shutdown signal
+async fn graceful_shutdown_signal(
+    handle: Handle,
+    mut graceful_shutdown: tokio::sync::mpsc::Receiver<()>,
+) {
+    tokio::select! {
+        _ = graceful_shutdown.recv() => {
+            log::info!("Http Server shutdown");
+                // Wait for the server to shutdown gracefully
+            handle.graceful_shutdown(Some(Duration::from_secs(30)));
+        }
+    }
 }
