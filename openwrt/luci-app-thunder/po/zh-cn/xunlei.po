@@ -1,11 +1,11 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-msgid "Xunlei"
+msgid "Thunder"
 msgstr "迅雷"
 
-msgid "<a>NAS Xunlei DSM 7.x Beta Version</a> | <a href=\"https://github.com/gngpp/xunlei\" target=\"_blank\">Project GitHub URL</a>"
-msgstr "<a>NAS 迅雷 DSM 7.x 内测版</a> | <a href=\"https://github.com/gngpp/xunlei\" target=\"_blank\">GitHub 项目地址</a>"
+msgid "<a>NAS Thunder DSM 7.x Beta Version</a> | <a href=\"https://github.com/gngpp/thunder\" target=\"_blank\">Project GitHub URL</a>"
+msgstr "<a>NAS 迅雷 DSM 7.x 内测版</a> | <a href=\"https://github.com/gngpp/thunder\" target=\"_blank\">GitHub 项目地址</a>"
 
 msgid "Enabled"
 msgstr "启用"
