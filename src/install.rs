@@ -180,14 +180,14 @@ impl Running for XunleiUninstall {
         let path = Path::new(constant::SYNOPKG_PKGBASE);
         if path.exists() {
             std::fs::remove_dir_all(path)?;
-            println!("[XunleiUninstall] Uninstall xunlei package");
+            println!("Uninstall xunlei package");
         }
 
         fn remove_if_symlink(path: &Path) -> Result<(), std::io::Error> {
             if let Ok(metadata) = std::fs::symlink_metadata(path) {
                 if metadata.file_type().is_symlink() {
                     std::fs::remove_file(path)?;
-                    println!("[XunleiUninstall] Uninstall xunlei {}", path.display());
+                    println!("Uninstall xunlei {}", path.display());
                 }
             }
             Ok(())
