@@ -18,9 +18,7 @@ pub(crate) const DEFAULT_STDERR_PATH: &str = "/var/run/xunlei.err";
 pub(crate) const DEFAULT_WORK_DIR: &str = "/";
 
 pub fn check_root() {
-    use nix::unistd::Uid;
-
-    if !Uid::effective().is_root() {
+    if !nix::unistd::Uid::effective().is_root() {
         println!("You must run this executable with root permissions");
         std::process::exit(-1)
     }
@@ -93,6 +91,19 @@ pub(super) fn stop() -> anyhow::Result<()> {
         let _ = std::fs::remove_file(PID_PATH);
     }
 
+    Ok(())
+}
+
+pub(super) fn restart() -> anyhow::Result<()> {
+    stop()?;
+    start()
+}
+
+pub(super) fn status() -> anyhow::Result<()> {
+    match get_pid() {
+        Some(pid) => println!("Xunlei is running with pid: {}", pid),
+        None => println!("Xunlei is not running"),
+    }
     Ok(())
 }
 

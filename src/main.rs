@@ -41,9 +41,13 @@ pub enum Commands {
     Run(ServeConfig),
     /// Start xunlei daemon
     Start(ServeConfig),
+    /// Restart xunlei daemon
+    Restart(ServeConfig),
     /// Stop xunlei daemon
     Stop,
-    /// Xunlei log
+    /// Status of the Http server daemon process
+    Status,
+    /// Show the Http server daemon log
     Log,
 }
 
@@ -182,8 +186,15 @@ fn main() -> anyhow::Result<()> {
             daemon::start()?;
             serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
         }
+        Commands::Restart(config) => {
+            daemon::restart()?;
+            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
+        }
         Commands::Stop => {
             daemon::stop()?;
+        }
+        Commands::Status => {
+            daemon::status()?;
         }
         Commands::Log => {
             daemon::log()?;
