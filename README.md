@@ -50,7 +50,7 @@ Options:
 GitHub [Releases](https://github.com/gngpp/thunder/releases) 中有预编译的 deb包，二进制文件，以Ubuntu为例：
 
 ```shell
-wget https://github.com/gngpp/thunder/releases/download/v1.0.0/thunder-1.0.0-aarch64-unknown-linux-gnu.deb
+wget https://github.com/gngpp/thunder/releases/download/v1.0.0/thunder_1.0.0_amd64.deb
 
 dpkg -i thunder_1.0.0_amd64.deb
 
