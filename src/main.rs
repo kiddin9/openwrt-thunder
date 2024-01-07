@@ -5,7 +5,6 @@ static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 pub mod asset;
 pub mod constant;
 mod daemon;
-pub mod homedir;
 mod install;
 mod serve;
 pub mod util;
@@ -13,7 +12,7 @@ pub mod util;
 use clap::{Args, Parser, Subcommand};
 use std::io::{BufRead, Write};
 use std::net::SocketAddr;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait Running {
     fn run(self) -> anyhow::Result<()>;
@@ -67,22 +66,22 @@ pub struct InstallConfig {
 }
 
 impl InstallConfig {
-    const P: &'static str = ".thunder";
+    const PATH: &'static str = "/etc/.thunder";
 
     /// Remove config file
     pub fn remove_file(self) -> anyhow::Result<()> {
-        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        let path = Path::new(Self::PATH);
         if path.exists() {
-            std::fs::remove_file(&path)?;
+            std::fs::remove_file(&Self::PATH)?;
         }
         Ok(())
     }
 
     /// Write to file
     fn write_to_file(&self) -> anyhow::Result<()> {
-        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        let path = Path::new(Self::PATH);
         if !path.exists() {
-            let mut file = std::fs::File::create(&path)?;
+            let mut file = std::fs::File::create(path)?;
             writeln!(file, "uid={}", self.uid)?;
             writeln!(file, "gid={}", self.gid)?;
             writeln!(file, "config_path={}", self.config_path.display())?;
@@ -100,7 +99,7 @@ impl InstallConfig {
 
     /// Read from file
     fn read_from_file() -> anyhow::Result<Self> {
-        let path = homedir::home_dir().unwrap_or_default().join(Self::P);
+        let path = Path::new(Self::PATH);
         if !path.exists() {
             anyhow::bail!("`{}` not found", path.display());
         }
@@ -111,7 +110,7 @@ impl InstallConfig {
         let mut download_path = PathBuf::new();
         let mut mount_bind_download_path = PathBuf::new();
 
-        let file = std::fs::File::open(&path)?;
+        let file = std::fs::File::open(&Self::PATH)?;
         let reader = std::io::BufReader::new(file);
         for line in reader.lines() {
             let line = line?;
