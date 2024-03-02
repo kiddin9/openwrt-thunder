@@ -8,6 +8,8 @@ root=$(pwd)
 target_list=(x86_64-unknown-linux-musl aarch64-unknown-linux-musl)
 for target in ${target_list[@]}; do
 
+  rustup target add $target
+  
   # default feature
   cargo zigbuild --release --target=$target
   upx --lzma target/$target/release/thunder
