@@ -259,6 +259,9 @@ async fn get_pan_thunder_com(
         if header.is_empty() {
             break;
         }
+        if header.starts_with("getEnvs ") {
+            continue;
+        }
 
         let (header, val) = header
             .split_once(':')
