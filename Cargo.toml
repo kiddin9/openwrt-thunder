@@ -1,6 +1,6 @@
 [package]
 name = "thunder"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 description = "Synology NAS thunder run on Linux"
 license = "MIT"
