@@ -23,10 +23,10 @@ pub fn check_root() {
 }
 
 /// Get the pid of the daemon
-pub fn get_pid() -> Option<String> {
+pub fn get_pid() -> Option<i32> {
     if let Ok(data) = std::fs::read(PID_PATH) {
         let binding = String::from_utf8(data).expect("pid file is not utf8");
-        return Some(binding.trim().to_string());
+        return Some(binding.trim().parse().expect("pid file is not a number"));
     }
     None
 }
@@ -34,7 +34,7 @@ pub fn get_pid() -> Option<String> {
 /// Start the daemon
 pub fn start() -> Result<()> {
     if let Some(pid) = get_pid() {
-        println!("Thunder is already running with pid: {}", pid);
+        println!("Thunder is already running with pid: {pid}");
         return Ok(());
     }
 
@@ -81,7 +81,6 @@ pub fn stop() -> Result<()> {
     check_root();
 
     if let Some(pid) = get_pid() {
-        let pid = pid.parse::<i32>()?;
         for _ in 0..360 {
             if signal::kill(Pid::from_raw(pid), signal::SIGINT).is_err() {
                 break;
@@ -96,9 +95,30 @@ pub fn stop() -> Result<()> {
 
 /// Show the status of the daemon
 pub fn status() -> Result<()> {
+    use sysinfo::System;
     match get_pid() {
-        Some(pid) => println!("Thunder is running with pid: {}", pid),
-        None => println!("Thunder is not running"),
+        Some(pid) => {
+            let mut sys = System::new();
+
+            // First we update all information of our `System` struct.
+            sys.refresh_all();
+
+            // Display processes ID
+            let process = sys
+                .processes()
+                .into_iter()
+                .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
+                .ok_or_else(|| anyhow::anyhow!("openai is not running"))?;
+
+            println!("{:<6} {:<6}  {:<6}", "PID", "CPU(%)", "MEM(MB)");
+            println!(
+                "{:<6}   {:<6.1}  {:<6.1}",
+                process.0,
+                process.1.cpu_usage(),
+                (process.1.memory() as f64) / 1024.0 / 1024.0
+            );
+        }
+        None => println!("openai is not running"),
     }
     Ok(())
 }

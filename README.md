@@ -36,8 +36,8 @@ Commands:
   run        Run thunder
   start      Start thunder daemon
   stop       Stop thunder daemon
-  status     Show the Http server daemon process
   log        Show the Http server daemon log
+  ps         Show the Http server daemon process
   help       Print this message or the help of the given subcommand(s)
 
 Options:
@@ -73,7 +73,7 @@ thunder start
 thunder stop
 
 # 查看运行状态
-thunder status
+thunder ps
 
 # 查看运行日志
 thunder log
