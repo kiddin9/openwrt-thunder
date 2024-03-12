@@ -10,6 +10,7 @@ use crate::{
     serve::{backend::BackendServer, frontend::FrontendServer},
     InstallConfig, Running, ServeConfig,
 };
+use anyhow::Result;
 use std::collections::HashMap;
 
 pub(crate) trait ConfigExt {
@@ -25,7 +26,7 @@ impl Serve {
 }
 
 impl Running for Serve {
-    fn run(self) -> anyhow::Result<()> {
+    fn run(self) -> Result<()> {
         use std::thread::{Builder, JoinHandle};
 
         let serve_config = self.0.clone();

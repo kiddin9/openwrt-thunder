@@ -9,7 +9,7 @@ struct Asset;
 struct Asset;
 
 #[cfg(target_os = "linux")]
-pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
+pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> Result<()> {
     use crate::{constant, util};
     use anyhow::Context;
     use std::ops::Not;

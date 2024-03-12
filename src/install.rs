@@ -2,20 +2,20 @@ use std::ops::Not;
 use std::path::Path;
 use std::path::PathBuf;
 
-use anyhow::Context;
-use rand::Rng;
-
 use crate::asset::thunder::Asset;
 use crate::constant;
 use crate::util;
 use crate::InstallConfig;
 use crate::Running;
+use anyhow::Context;
+use anyhow::Result;
+use rand::Rng;
 
 /// Install xunlei
 pub struct XunleiInstall(pub InstallConfig);
 
 impl Running for XunleiInstall {
-    fn run(self) -> anyhow::Result<()> {
+    fn run(self) -> Result<()> {
         // If the package is already installed, skip the installation
         if Path::new(constant::SYNOPKG_VAR).exists() {
             println!("Thunder already installed");
@@ -66,12 +66,20 @@ impl Running for XunleiInstall {
         let target_dir = PathBuf::from(constant::SYNOPKG_PKGDEST);
         // /var/packages/pan-xunlei-com/target/host
         let host_dir = PathBuf::from(constant::SYNOPKG_HOST);
+        // If Synology NAS is not installed, the backend service will not be started
+        let var_path = Path::new(constant::SYNOPKG_VAR);
 
         // uid and gid
         let uid = self.0.uid;
         let gid = self.0.gid;
 
         util::create_dir_all(&target_dir, 0o755)?;
+
+        // path: /var/packages/pan-xunlei-com/target/var
+        if !var_path.exists() {
+            util::create_dir_all(var_path, 0o777)?;
+            util::chown(var_path, uid, gid)?;
+        }
 
         // download xunlei binary
         let xunlei = Asset::new(self.0.package)?;
@@ -175,7 +183,7 @@ impl Running for XunleiInstall {
 pub struct XunleiUninstall(pub Option<InstallConfig>);
 
 impl Running for XunleiUninstall {
-    fn run(self) -> anyhow::Result<()> {
+    fn run(self) -> Result<()> {
         // path: /var/packages/pan-xunlei-com
         let path = Path::new(constant::SYNOPKG_PKGBASE);
         if path.exists() {

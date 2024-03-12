@@ -1,3 +1,5 @@
+use anyhow::Context;
+use anyhow::Result;
 use core::str;
 use std::{
     borrow::Cow,
@@ -6,8 +8,6 @@ use std::{
     ops::Not,
     path::{Path, PathBuf},
 };
-
-use anyhow::Context;
 use tar::Archive;
 
 pub struct Asset {
@@ -31,7 +31,7 @@ impl Asset {
         })
     }
 
-    pub fn init(&self) -> anyhow::Result<()> {
+    pub fn init(&self) -> Result<()> {
         match self.package {
             Some(ref filepath) => {
                 // check filepath is exists
@@ -90,7 +90,7 @@ impl Asset {
         }
     }
 
-    fn decompressor<T: AsRef<Path>>(dir: T, archive_path: T) -> anyhow::Result<()> {
+    fn decompressor<T: AsRef<Path>>(dir: T, archive_path: T) -> Result<()> {
         const PACKAGE_XZ: &str = "package.tgz";
         const PACKAGE_TAR: &str = "package.tar";
 
@@ -158,7 +158,7 @@ impl Asset {
         Ok(())
     }
 
-    fn copy_write(mut src: impl Read, dest: &mut File) -> anyhow::Result<()> {
+    fn copy_write(mut src: impl Read, dest: &mut File) -> Result<()> {
         let mut buffer = [0; 1024];
 
         loop {

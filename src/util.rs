@@ -1,8 +1,7 @@
-use std::{fs, os::unix::prelude::PermissionsExt, path::Path};
-
-use std::{borrow::Cow, io::Write, path::PathBuf};
-
 use anyhow::Context;
+use anyhow::Result;
+use std::{borrow::Cow, io::Write, path::PathBuf};
+use std::{fs, os::unix::prelude::PermissionsExt, path::Path};
 
 fn set_dir_permission(path: &Path, permission: u32) -> std::io::Result<()> {
     if path.is_dir() {
@@ -22,7 +21,7 @@ fn set_dir_permission(path: &Path, permission: u32) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn chown(target_path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
+pub fn chown(target_path: &Path, uid: u32, gid: u32) -> Result<()> {
     nix::unistd::chown(target_path, Some(uid.into()), Some(gid.into()))
         .context(format!("chown {} error", target_path.display()))?;
     Ok(())
@@ -55,7 +54,7 @@ pub fn recursive_chown(path: &Path, uid: u32, gid: u32) {
     }
 }
 
-pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyhow::Result<()> {
+pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> Result<()> {
     let mut target_file = std::fs::File::create(target_path)?;
     target_file
         .write_all(&content)
@@ -71,7 +70,7 @@ pub fn write_file(target_path: &PathBuf, content: Cow<[u8]>, mode: u32) -> anyho
     Ok(())
 }
 
-pub fn create_dir_all(target_path: &Path, mode: u32) -> anyhow::Result<()> {
+pub fn create_dir_all(target_path: &Path, mode: u32) -> Result<()> {
     std::fs::create_dir_all(target_path).context(format!(
         "Failed to create folder: {}",
         target_path.display()

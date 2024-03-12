@@ -1,7 +1,7 @@
+use super::{CHECK_AUTH, EXP, TOKEN_SECRET};
+use anyhow::Result;
 use jsonwebtokens::{encode, Algorithm, AlgorithmID, Verifier};
 use std::{collections::HashMap, time::Duration};
-
-use super::{CHECK_AUTH, EXP, TOKEN_SECRET};
 
 fn get_or_init_secret() -> &'static String {
     TOKEN_SECRET.get_or_init(|| {
@@ -27,7 +27,7 @@ pub fn generate_token() -> anyhow::Result<String> {
     Ok(encode(&header, &claims, &alg)?)
 }
 
-pub fn verifier(token_str: &str) -> anyhow::Result<()> {
+pub fn verifier(token_str: &str) -> Result<()> {
     let s = get_or_init_secret();
     let alg = Algorithm::new_hmac(AlgorithmID::HS256, s.to_owned())?;
     let verifier = Verifier::create().build()?;

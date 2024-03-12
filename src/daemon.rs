@@ -1,3 +1,4 @@
+use anyhow::Result;
 use daemonize::Daemonize;
 use std::{
     fs::{File, Permissions},
@@ -22,7 +23,7 @@ pub fn check_root() {
 }
 
 /// Get the pid of the daemon
-pub(crate) fn get_pid() -> Option<String> {
+pub fn get_pid() -> Option<String> {
     if let Ok(data) = std::fs::read(PID_PATH) {
         let binding = String::from_utf8(data).expect("pid file is not utf8");
         return Some(binding.trim().to_string());
@@ -31,7 +32,7 @@ pub(crate) fn get_pid() -> Option<String> {
 }
 
 /// Start the daemon
-pub(super) fn start() -> anyhow::Result<()> {
+pub fn start() -> Result<()> {
     if let Some(pid) = get_pid() {
         println!("Thunder is already running with pid: {}", pid);
         return Ok(());
@@ -73,7 +74,7 @@ pub(super) fn start() -> anyhow::Result<()> {
 }
 
 /// Stop the daemon
-pub(super) fn stop() -> anyhow::Result<()> {
+pub fn stop() -> Result<()> {
     use nix::sys::signal;
     use nix::unistd::Pid;
 
@@ -94,7 +95,7 @@ pub(super) fn stop() -> anyhow::Result<()> {
 }
 
 /// Show the status of the daemon
-pub(super) fn status() -> anyhow::Result<()> {
+pub fn status() -> Result<()> {
     match get_pid() {
         Some(pid) => println!("Thunder is running with pid: {}", pid),
         None => println!("Thunder is not running"),
@@ -103,8 +104,8 @@ pub(super) fn status() -> anyhow::Result<()> {
 }
 
 /// Show the log of the daemon
-pub(super) fn log() -> anyhow::Result<()> {
-    fn read_and_print_file(file_path: &Path, placeholder: &str) -> anyhow::Result<()> {
+pub fn log() -> Result<()> {
+    fn read_and_print_file(file_path: &Path, placeholder: &str) -> Result<()> {
         if !file_path.exists() {
             return Ok(());
         }
