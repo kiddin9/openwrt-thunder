@@ -10,7 +10,6 @@ struct Asset;
 #[folder = "src/libc/aarch64/"]
 struct Asset;
 
-
 pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> Result<()> {
     use crate::{constant, util};
     use anyhow::Context;
