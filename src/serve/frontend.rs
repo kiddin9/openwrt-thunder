@@ -76,7 +76,6 @@ impl FrontendServer {
                 tower_http::trace::TraceLayer::new_for_http()
                     .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                     .on_response(trace::DefaultOnResponse::new().level(Level::INFO))
-                    .on_request(trace::DefaultOnRequest::new().level(Level::INFO))
                     .on_failure(trace::DefaultOnFailure::new().level(Level::WARN)),
             )
             .with_state(Arc::new((self.0.clone(), self.1.clone())));

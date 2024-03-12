@@ -58,14 +58,6 @@ pub fn start() -> Result<()> {
         .stderr(stderr) // Redirect stderr to `/tmp/daemon.err`.
         .privileged_action(|| "Executed before drop privileges");
 
-    if let Ok(user) = std::env::var("SUDO_USER") {
-        if let Ok(Some(real_user)) = nix::unistd::User::from_name(&user) {
-            daemonize = daemonize
-                .user(real_user.name.as_str())
-                .group(real_user.gid.as_raw());
-        }
-    }
-
     if let Some(err) = daemonize.start().err() {
         eprintln!("Error: {err}")
     }
@@ -108,7 +100,7 @@ pub fn status() -> Result<()> {
                 .processes()
                 .into_iter()
                 .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
-                .ok_or_else(|| anyhow::anyhow!("openai is not running"))?;
+                .ok_or_else(|| anyhow::anyhow!("thunder is not running"))?;
 
             println!("{:<6} {:<6}  {:<6}", "PID", "CPU(%)", "MEM(MB)");
             println!(
@@ -118,7 +110,7 @@ pub fn status() -> Result<()> {
                 (process.1.memory() as f64) / 1024.0 / 1024.0
             );
         }
-        None => println!("openai is not running"),
+        None => println!("thunder is not running"),
     }
     Ok(())
 }

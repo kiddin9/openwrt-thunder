@@ -64,7 +64,7 @@ impl Running for Serve {
         // Start frontend thread
         std::thread::spawn(move || {
             if let Some(err) = FrontendServer::new(self.0, self.1, rx).run().err() {
-                log::error!("error: {}", err);
+                log::error!("error: {err}");
             }
         });
 
