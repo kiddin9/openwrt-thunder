@@ -39,10 +39,10 @@ pub enum Commands {
     Start(ServeConfig),
     /// Stop thunder daemon
     Stop,
-    /// Show the Http server daemon process
-    Status,
     /// Show the Http server daemon log
     Log,
+    /// Show the Http server daemon process
+    PS,
 }
 
 #[derive(Args, Clone)]
@@ -190,11 +190,13 @@ fn main() -> Result<()> {
         }
         Commands::Run(server_config) => {
             let install_config = InstallConfig::read_from_file()?;
+            #[cfg(target_os = "linux")]
             before_action(&install_config)?;
             serve::Serve::new(server_config, install_config).run()?;
         }
         Commands::Start(server_config) => {
             let install_config = InstallConfig::read_from_file()?;
+            #[cfg(target_os = "linux")]
             before_action(&install_config)?;
             daemon::start()?;
             serve::Serve::new(server_config, install_config).run()?;
@@ -202,7 +204,7 @@ fn main() -> Result<()> {
         Commands::Stop => {
             daemon::stop()?;
         }
-        Commands::Status => {
+        Commands::PS => {
             daemon::status()?;
         }
         Commands::Log => {
@@ -213,13 +215,11 @@ fn main() -> Result<()> {
 }
 
 /// Running before the daemon starts, execute the following code
+#[cfg(target_os = "linux")]
 fn before_action(install_config: &InstallConfig) -> Result<()> {
-    #[cfg(target_os = "linux")]
     use nix::mount::MsFlags;
 
-    #[cfg(target_os = "linux")]
     let _ = nix::mount::umount(&install_config.mount_bind_download_path);
-    #[cfg(target_os = "linux")]
     if nix::mount::mount(
         Some(&install_config.download_path),
         &install_config.mount_bind_download_path,
