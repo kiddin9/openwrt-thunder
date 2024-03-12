@@ -1,3 +1,3 @@
-#[cfg(all(target_os = "linux", target_env = "musl"))]
+#[cfg(target_os = "linux")]
 pub mod libc;
 pub mod thunder;
