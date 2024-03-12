@@ -49,7 +49,7 @@ pub fn start() -> Result<()> {
     let stderr = File::create(DEFAULT_STDERR_PATH)?;
     stdout.set_permissions(Permissions::from_mode(0o755))?;
 
-    let mut daemonize = Daemonize::new()
+    let daemonize = Daemonize::new()
         .pid_file(PID_PATH) // Every method except `new` and `start`
         .chown_pid_file(true) // is optional, see `Daemonize` documentation
         .working_directory(DEFAULT_WORK_DIR) // for default behaviour.
