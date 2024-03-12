@@ -1,3 +1,5 @@
+use anyhow::Result;
+
 #[cfg(target_arch = "x86_64")]
 #[derive(rust_embed::RustEmbed)]
 #[folder = "src/libc/x86_64/"]
@@ -8,8 +10,7 @@ struct Asset;
 #[folder = "src/libc/aarch64/"]
 struct Asset;
 
-#[cfg(target_os = "linux")]
-pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> anyhow::Result<()> {
+pub(crate) fn ld_env(envs: &mut std::collections::HashMap<String, String>) -> Result<()> {
     use crate::{constant, util};
     use anyhow::Context;
     use std::ops::Not;

@@ -1,14 +1,12 @@
-#[cfg(target_os = "linux")]
-use nix::mount::MsFlags;
+use crate::serve::ConfigExt;
+use crate::ServeConfig;
+use crate::{constant, InstallConfig, Running};
+use anyhow::Result;
 use nix::sys::signal;
 use nix::unistd::Pid;
 use signal_hook::iterator::Signals;
 use std::os::unix::process::CommandExt;
-
-use crate::serve::ConfigExt;
-use crate::{constant, InstallConfig, Running};
-use crate::{util, ServeConfig};
-use std::{ops::Not, path::Path, process::Stdio};
+use std::process::Stdio;
 
 pub(super) struct BackendServer(ServeConfig, InstallConfig, tokio::sync::mpsc::Sender<()>);
 
@@ -23,33 +21,7 @@ impl BackendServer {
 }
 
 impl Running for BackendServer {
-    fn run(self) -> anyhow::Result<()> {
-        // If Synology NAS is not installed, the backend service will not be started
-        let var_path = Path::new(constant::SYNOPKG_VAR);
-        if var_path.exists().not() {
-            util::create_dir_all(var_path, 0o777)?;
-            util::chown(var_path, self.1.uid, self.1.gid)?;
-        }
-
-        #[cfg(target_os = "linux")]
-        let _ = nix::mount::umount(&self.1.mount_bind_download_path);
-        #[cfg(target_os = "linux")]
-        if nix::mount::mount(
-            Some(&self.1.download_path),
-            &self.1.mount_bind_download_path,
-            <Option<&'static [u8]>>::None,
-            MsFlags::MS_BIND,
-            <Option<&'static [u8]>>::None,
-        )
-        .is_err()
-        {
-            anyhow::bail!(
-                "Mount {} to {} failed",
-                self.1.download_path.display(),
-                self.1.mount_bind_download_path.display()
-            );
-        }
-
+    fn run(self) -> Result<()> {
         // environment variables
         let envs = (&self.0, &self.1).envs()?;
 

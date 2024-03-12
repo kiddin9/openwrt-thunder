@@ -9,13 +9,14 @@ mod install;
 mod serve;
 pub mod util;
 
+use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use std::io::{BufRead, Write};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 
 pub trait Running {
-    fn run(self) -> anyhow::Result<()>;
+    fn run(self) -> Result<()>;
 }
 
 #[derive(Parser)]
@@ -69,7 +70,7 @@ impl InstallConfig {
     const PATH: &'static str = "/etc/.thunder";
 
     /// Remove config file
-    pub fn remove_file(self) -> anyhow::Result<()> {
+    pub fn remove_file(self) -> Result<()> {
         let path = Path::new(Self::PATH);
         if path.exists() {
             std::fs::remove_file(&Self::PATH)?;
@@ -78,7 +79,7 @@ impl InstallConfig {
     }
 
     /// Write to file
-    fn write_to_file(&self) -> anyhow::Result<()> {
+    fn write_to_file(&self) -> Result<()> {
         let path = Path::new(Self::PATH);
         if !path.exists() {
             let mut file = std::fs::File::create(path)?;
@@ -175,7 +176,7 @@ pub struct ServeConfig {
     tls_key: Option<PathBuf>,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let opt = Opt::parse();
 
     match opt.commands {
@@ -187,12 +188,16 @@ fn main() -> anyhow::Result<()> {
             let install_config = InstallConfig::read_from_file().map_or(None, |v| Some(v));
             install::XunleiUninstall(install_config).run()?;
         }
-        Commands::Run(config) => {
-            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
+        Commands::Run(server_config) => {
+            let install_config = InstallConfig::read_from_file()?;
+            before_action(&install_config)?;
+            serve::Serve::new(server_config, install_config).run()?;
         }
-        Commands::Start(config) => {
+        Commands::Start(server_config) => {
+            let install_config = InstallConfig::read_from_file()?;
+            before_action(&install_config)?;
             daemon::start()?;
-            serve::Serve::new(config, InstallConfig::read_from_file()?).run()?;
+            serve::Serve::new(server_config, install_config).run()?;
         }
         Commands::Stop => {
             daemon::stop()?;
@@ -203,6 +208,32 @@ fn main() -> anyhow::Result<()> {
         Commands::Log => {
             daemon::log()?;
         }
+    }
+    Ok(())
+}
+
+/// Running before the daemon starts, execute the following code
+fn before_action(install_config: &InstallConfig) -> Result<()> {
+    #[cfg(target_os = "linux")]
+    use nix::mount::MsFlags;
+
+    #[cfg(target_os = "linux")]
+    let _ = nix::mount::umount(&install_config.mount_bind_download_path);
+    #[cfg(target_os = "linux")]
+    if nix::mount::mount(
+        Some(&install_config.download_path),
+        &install_config.mount_bind_download_path,
+        <Option<&'static [u8]>>::None,
+        MsFlags::MS_BIND,
+        <Option<&'static [u8]>>::None,
+    )
+    .is_err()
+    {
+        anyhow::bail!(
+            "Mount {} to {} failed",
+            install_config.download_path.display(),
+            install_config.mount_bind_download_path.display()
+        );
     }
     Ok(())
 }

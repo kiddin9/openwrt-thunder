@@ -6,6 +6,7 @@ use super::{
 };
 use crate::{constant, InstallConfig, Running, ServeConfig};
 use anyhow::Context;
+use anyhow::Result;
 use axum::{
     body::{Body, StreamBody},
     extract::State,
@@ -41,7 +42,7 @@ struct User {
 pub(super) struct FrontendServer(ServeConfig, InstallConfig, tokio::sync::mpsc::Receiver<()>);
 
 impl Running for FrontendServer {
-    fn run(self) -> anyhow::Result<()> {
+    fn run(self) -> Result<()> {
         self.start_server()
     }
 }
@@ -56,7 +57,7 @@ impl FrontendServer {
     }
 
     #[tokio::main]
-    async fn start_server(self) -> anyhow::Result<()> {
+    async fn start_server(self) -> Result<()> {
         log::info!("Starting frontend server: {}", self.0.bind);
 
         // Set check auth
