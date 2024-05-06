@@ -45,6 +45,14 @@ Options:
   -V, --version  Print version
 ```
 
+### Arch Linux
+
+Arch Linux 及其衍生版可以通过 [AUR](https://aur.archlinux.org/packages/thunder-nas-bin) 或[自建源](https://github.com/taotieren/aur-repo)安装 `thunder-nas`
+
+```bash
+yay -Syu thunder-nas
+```
+
 ### Ubuntu(Other Linux)
 
 GitHub [Releases](https://github.com/gngpp/thunder/releases) 中有预编译的 deb包，二进制文件，以Ubuntu为例：
