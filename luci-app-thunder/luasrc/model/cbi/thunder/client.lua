@@ -1,3 +1,5 @@
+local sys  = require "luci.sys"
+local util = require "luci.util"
 local m, s
 
 m = Map("thunder", translate("Thunder"))
@@ -15,8 +17,14 @@ o.rmempty = false
 o = s:option(Flag, "debug", translate("Debug"))
 o.rmempty = false
 
-o = s:option(Value, "bind", translate("Bind"))
-o.default = "0.0.0.0:5055"
+user = s:option(ListValue, "user", translate("Run daemon as user"))
+local p_user
+for _, p_user in util.vspairs(util.split(sys.exec("cat /etc/passwd | cut -f 1 -d :"))) do
+	user:value(p_user)
+end
+
+o = s:option(Value, "port", translate("Port"))
+o.default = "5055"
 
 o = s:option(Value, "auth_password", translate("Password"))
 o.password = true
