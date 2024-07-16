@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=thunder
 
-PKG_VERSION:=3.11.2-32
+PKG_VERSION:=1.0.3
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
@@ -42,7 +42,7 @@ define Build/Prepare
 	rm $(PKG_SOURCE).sha256 $(PKG_SOURCE)
 
 	tar -xvf $(DL_DIR)/$(PKG_SOURCE)
-	mv thunder-$(PKG_VERSION)-$(ARCH)-unknown-linux-musl/* $(PKG_BUILD_DIR)/
+	mv thunder $(PKG_BUILD_DIR)/
 endef
 
 define Build/Compile
@@ -69,7 +69,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/share/thunder/target
 	$(INSTALL_DIR) $(1)/usr/share/thunder/target/host
 	$(INSTALL_DIR) $(1)/usr/share/thunder/target/etc
-	$(CP) $(PKG_BUILD_DIR)/bin/* $(1)/usr/share/thunder/target/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) $(CURDIR)/files/thunder.init $(1)/etc/init.d/thunder
